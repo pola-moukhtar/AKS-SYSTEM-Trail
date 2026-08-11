@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تصليح بيانات القادة</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial; padding: 40px; background: #1a1a1a; color: #fff; }
+        .log { background: #2a2a2a; padding: 20px; border-radius: 8px; margin-top: 20px; max-height: 500px; overflow-y: auto; }
+        .log-item { padding: 8px; border-bottom: 1px solid #444; font-size: 14px; }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .info { color: #2196f3; }
+        button { background: #c9a84c; color: #000; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:hover { background: #e8d5a3; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>🔧 تصليح بيانات القادة</h1>
+    <p>هذا السكريبت هيحدث بيانات القادة تلقائياً:</p>
+    <ul>
+        <li>قادة القطاع: هيملي الـ sector و troop حسب القطاع</li>
+        <li>قادة الفرق: هيملي الـ sector حسب الفرقة</li>
+    </ul>
+    
+    <button id="fixBtn" onclick="fixLeadersData()">ابدأ التصليح</button>
+    
+    <div class="log" id="logContainer"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const item = document.createElement('div');
+            item.className = `log-item ${type}`;
+            item.textContent = `[${new Date().toLocaleTimeString('ar-EG')}] ${message}`;
+            logContainer.appendChild(item);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        async function fixLeadersData() {
+            const btn = document.getElementById('fixBtn');
+            btn.disabled = true;
+            btn.textContent = 'جاري التصليح...';
+            
+            log('🚀 بدء عملية التصليح...', 'info');
+
+            // جلب كل القادة
+            const { data: leaders, error: fetchError } = await supabaseClient
+                .from('leaders')
+                .select('*');
+
+            if (fetchError) {
+                log('❌ فشل جلب البيانات: ' + fetchError.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'ابدأ التصليح';
+                return;
+            }
+
+            log(`📊 تم جلب ${leaders.length} قائد`, 'info');
+
+            // Mapping للقطاعات والفرق
+            const troopToSector = {
+                'براعم': 'براعم',
+                'أشبال وزهرات': 'ابتدائي',
+                'أشبال': 'ابتدائي',
+                'زهرات': 'ابتدائي',
+                'مبتدئ ومرشدات': 'اعدادي',
+                'كشاف مبتدئ': 'اعدادي',
+                'مرشدات': 'اعدادي',
+                'متقدم ورائدات': 'ثانوي',
+                'كشاف متقدم': 'ثانوي',
+                'رائدات': 'ثانوي'
+            };
+
+            const sectorToTroop = {
+                'براعم': 'براعم',
+                'ابتدائي': 'أشبال وزهرات',
+                'اعدادي': 'كشاف مبتدئ',
+                'ثانوي': 'كشاف متقدم'
+            };
+
+            let updatedCount = 0;
+            let skippedCount = 0;
+
+            // معالجة كل قائد
+            for (const leader of leaders) {
+                let needsUpdate = false;
+                let updateData = {};
+
+                // قائد قطاع
+                if (leader.role === 'SectorLeader') {
+                    if (leader.sector && !leader.troop) {
+                        // عنده sector بس مفيش troop
+                        updateData.troop = sectorToTroop[leader.sector] || null;
+                        needsUpdate = true;
+                        log(`🔄 قائد قطاع: ${leader.full_name} - هيتحط troop: ${updateData.troop}`, 'info');
+                    } else if (!leader.sector && leader.troop) {
+                        // عنده troop بس مفيش sector
+                        updateData.sector = troopToSector[leader.troop] || null;
+                        needsUpdate = true;
+                        log(`🔄 قائد قطاع: ${leader.full_name} - هيتحط sector: ${updateData.sector}`, 'info');
+                    } else if (!leader.sector && !leader.troop) {
+                        log(`⚠️ قائد قطاع: ${leader.full_name} - مفيش بيانات كافية للتحديث`, 'error');
+                    }
+                }
+
+                // قائد فرقة
+                if (leader.role === 'TroopLeader') {
+                    if (leader.troop && !leader.sector) {
+                        // عنده troop بس مفيش sector
+                        updateData.sector = troopToSector[leader.troop] || null;
+                        needsUpdate = true;
+                        log(`🔄 قائد فرقة: ${leader.full_name} - هيتحط sector: ${updateData.sector}`, 'info');
+                    }
+                }
+
+                // Master و General
+                if (leader.role === 'Master' || leader.role === 'General') {
+                    if (leader.sector !== 'الكل' || leader.troop !== 'الكل') {
+                        updateData.sector = 'الكل';
+                        updateData.troop = 'الكل';
+                        needsUpdate = true;
+                        log(`🔄 ${leader.role}: ${leader.full_name} - هيتحط sector و troop = الكل`, 'info');
+                    }
+                }
+
+                // تحديث البيانات
+                if (needsUpdate) {
+                    const { error: updateError } = await supabaseClient
+                        .from('leaders')
+                        .update(updateData)
+                        .eq('id', leader.id);
+
+                    if (updateError) {
+                        log(`❌ فشل تحديث ${leader.full_name}: ${updateError.message}`, 'error');
+                    } else {
+                        log(`✅ تم تحديث ${leader.full_name}`, 'success');
+                        updatedCount++;
+                    }
+                } else {
+                    skippedCount++;
+                }
+            }
+
+            log('', 'info');
+            log('═══════════════════════════════════', 'info');
+            log(`✅ انتهى التصليح!`, 'success');
+            log(`📊 تم تحديث: ${updatedCount} قائد`, 'success');
+            log(`⏭️ تم تخطي: ${skippedCount} قائد (مفيش تحديثات مطلوبة)`, 'info');
+            log('═══════════════════════════════════', 'info');
+            log('', 'info');
+            log('🎉 دلوقتي امسح localStorage وسجل دخول تاني!', 'success');
+            log('💡 اكتب في Console: localStorage.clear()', 'info');
+
+            btn.disabled = false;
+            btn.textContent = 'تم التصليح ✓';
+            btn.style.background = '#4caf50';
+        }
+    </script>
+</body>
+</html>

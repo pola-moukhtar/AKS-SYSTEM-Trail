@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الافتقاد - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: var(--silver); min-height: 100vh; }
+        nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); box-shadow: 0 2px 20px rgba(201,168,76,0.1); }
+        .tabs-bar { background: var(--dark3); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; gap: 4px; padding: 8px; }
+        .tab-btn { color: #888; background: transparent; border: none; padding: 12px 20px; border-radius: 8px 8px 0 0; transition: all 0.2s; white-space: nowrap; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+        .tab-btn:hover { color: var(--gold-lt); background: rgba(201,168,76,0.05); }
+        .tab-btn.active { background: var(--dark2); color: var(--gold); border-bottom: 3px solid var(--gold); }
+        .tab-btn .close-tab { margin-right: 8px; color: #ef4444; opacity: 0.7; transition: opacity 0.2s; }
+        .tab-btn .close-tab:hover { opacity: 1; }
+        .content-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 20px; }
+        .scout-item { background: var(--dark3); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; transition: all 0.2s; }
+        .scout-item:hover { border-color: rgba(201,168,76,0.5); }
+        .scout-item.contacted { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.3); }
+        .checkbox-custom { width: 24px; height: 24px; cursor: pointer; accent-color: var(--gold); }
+        .form-input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid rgba(201,168,76,0.2); border-radius: 8px; background: var(--dark3); color: #fff; outline: none; font-size: 0.9rem; }
+        .form-input:focus { border-color: var(--gold); }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #a8832a 100%); color: #0d0d0d; font-weight: 700; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--silver); transition: all 0.2s; cursor: pointer; }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-box { background: var(--dark2); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .stat-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+    <nav class="p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+            <button onclick="window.location.href='home.html'" class="text-xl text-gray-500 hover:text-[var(--gold)] transition ml-2" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+            <div>
+                <h1 class="text-lg font-bold text-white">الافتقاد</h1>
+                <p class="text-xs text-gray-500" id="sectorLabel">جاري التحميل...</p>
+            </div>
+        </div>
+        <button onclick="openNewTaskModal()" class="btn-gold px-4 py-2 rounded-lg text-sm flex items-center gap-2" id="addTaskBtn">
+            <i class="fa-solid fa-plus"></i> مهمة جديدة
+        </button>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="tabs-bar" id="tabsContainer">
+            <div class="text-center text-gray-500 py-2 w-full">جاري التحميل...</div>
+        </div>
+
+        <div id="taskContent">
+            <div class="content-card text-center text-gray-500">
+                <i class="fa-solid fa-clipboard-list text-5xl mb-3 opacity-50"></i>
+                <p>اختر مهمة من الأعلى أو أنشئ مهمة جديدة</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="newTaskModal" class="modal-overlay hidden">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="flex justify-between items-center p-5 border-b border-[var(--border)]">
+                <h3 class="font-bold text-white text-lg">إنشاء مهمة افتقاد جديدة</h3>
+                <button onclick="closeNewTaskModal()" class="text-gray-500 hover:text-red-400 text-xl"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
+            <div class="p-5">
+                <div class="mb-4">
+                    <label class="form-label">تاريخ المهمة *</label>
+                    <input type="date" id="newTaskDate" class="form-input" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">اختر القائد المسؤول عن الافتقاد *</label>
+                    <select id="taskLeaderSelect" class="form-input" onchange="onLeaderSelected()">
+                        <option value="">-- اختر قائد --</option>
+                    </select>
+                </div>
+
+                <div class="mb-4" id="scoutsSelectionSection" style="display:none;">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="form-label" style="margin-bottom:0;">اختر الكشافين *</label>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="selectAllScouts()" class="text-xs text-[var(--gold)] hover:underline">تحديد الكل</button>
+                            <span class="text-gray-600">|</span>
+                            <button type="button" onclick="deselectAllScouts()" class="text-xs text-gray-400 hover:text-white hover:underline">إلغاء الكل</button>
+                        </div>
+                    </div>
+                    <div id="scoutsCheckList" class="border border-[rgba(201,168,76,0.2)] rounded-lg overflow-y-auto" style="max-height: 220px; background: var(--dark3);">
+                        </div>
+                    <p class="text-xs text-gray-500 mt-1">تم تحديد <span id="selectedScoutsCount" class="text-[var(--gold)] font-bold">0</span> كشاف</p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">ملاحظات (اختياري)</label>
+                    <textarea id="newTaskNotes" class="form-input" rows="2" placeholder="مثال: افتقاد أسبوعي"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-[var(--border)]">
+                    <button onclick="closeNewTaskModal()" class="btn-outline px-4 py-2 rounded-lg text-sm">إلغاء</button>
+                    <button onclick="createNewTask()" class="btn-gold px-6 py-2 rounded-lg text-sm">إنشاء المهمة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('scout_leader_session') || 'null');
+        if (!currentUser) window.location.href = 'index.html';
+
+        const isSectorLeader = currentUser.role === 'SectorLeader';
+        const isMasterOrGeneral = currentUser.role === 'Master' || currentUser.role === 'General';
+        const canCreateTasks = isSectorLeader || isMasterOrGeneral;
+
+        let allTasks = [];
+        let currentTaskId = null;
+        let availableLeaders = [];   
+        let availableScouts = [];    
+
+        function getUserSector() {
+            console.log('getUserSector called');
+            console.log('currentUser.role:', currentUser.role);
+            console.log('currentUser.sector:', currentUser.sector);
+            console.log('currentUser.troop:', currentUser.troop);
+            
+            if (currentUser.role === 'SectorLeader') {
+                return currentUser.sector;
+            } else if (currentUser.role === 'TroopLeader') {
+                const troopMap = {
+                    'براعم': 'براعم',
+                    'أشبال وزهرات': 'ابتدائي',
+                    'أشبال': 'ابتدائي',
+                    'زهرات': 'ابتدائي',
+                    'مبتدئ ومرشدات': 'اعدادي',
+                    'كشاف مبتدئ': 'اعدادي',
+                    'مرشدات': 'اعدادي',
+                    'متقدم ورائدات': 'ثانوي',
+                    'كشاف متقدم': 'ثانوي',
+                    'رائدات': 'ثانوي',
+                    'مرشح جوالة': 'مرشح جوالة'
+                };
+                return troopMap[currentUser.troop] || null;
+            }
+            return null;
+        }
+
+        const userSector = getUserSector();
+        console.log('Final userSector:', userSector);
+
+        if (!canCreateTasks) {
+            document.getElementById('addTaskBtn').style.display = 'none';
+        }
+
+        if (isMasterOrGeneral) {
+            document.getElementById('sectorLabel').textContent = 'كل المجموعة';
+        } else if (isSectorLeader) {
+            document.getElementById('sectorLabel').textContent = `قطاع ${userSector}`;
+        } else {
+            document.getElementById('sectorLabel').textContent = `فرقة ${currentUser.troop}`;
+        }
+
+        async function loadTasks() {
+            const tabsContainer = document.getElementById('tabsContainer');
+            tabsContainer.innerHTML = '<div class="text-center text-gray-500 py-2 w-full"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري التحميل...</div>';
+
+            let query = supabaseClient.from('follow_up_tasks').select('*').order('task_date', { ascending: false });
+
+            // قائد الفرقة: جيب المهام المعينة له فقط (بغض النظر عن القطاع)
+            if (currentUser.role === 'TroopLeader') {
+                query = query.eq('assigned_to', currentUser.id);
+            } 
+            // قائد القطاع: جيب مهام قطاعه فقط
+            else if (isSectorLeader && userSector) {
+                query = query.eq('sector', userSector);
+            }
+            // Master/General: جيب كل المهام (مفيش فلتر)
+
+            const { data, error } = await query;
+
+            if (error) {
+                tabsContainer.innerHTML = '<div class="text-center text-red-400 py-2 w-full">فشل التحميل</div>';
+                console.error('Error loading tasks:', error);
+                return;
+            }
+
+            let rawTasks = data || [];
+            allTasks = rawTasks;
+
+            if (allTasks.length === 0) {
+                tabsContainer.innerHTML = '<div class="text-center text-gray-500 py-2 w-full">مفيش مهام افتقاد حالياً تخصك</div>';
+                const taskContent = document.getElementById('taskContent');
+                if (taskContent) {
+                    taskContent.innerHTML = `
+                        <div class="content-card text-center text-gray-500">
+                            <i class="fa-solid fa-clipboard-list text-5xl mb-3 opacity-50"></i>
+                            <p>مفيش مهام افتقاد معينة لك في هذا القطاع</p>
+                        </div>`;
+                }
+                return;
+            }
+
+            tabsContainer.innerHTML = '';
+            allTasks.forEach((task, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'tab-btn' + (index === 0 ? ' active' : '');
+                btn.onclick = (e) => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectTask(task.id);
+                };
+                
+                const dateObj = new Date(task.task_date);
+                const dateStr = dateObj.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
+                
+                btn.innerHTML = `
+                    <i class="fa-solid fa-calendar-day ml-1"></i>
+                    ${dateStr}
+                    ${canCreateTasks ? `<span class="close-tab" onclick="event.stopPropagation(); deleteTask('${task.id}')"><i class="fa-solid fa-xmark"></i></span>` : ''}
+                `;
+                tabsContainer.appendChild(btn);
+            });
+
+            if (allTasks.length > 0) {
+                selectTask(allTasks[0].id);
+            }
+        }
+
+        async function selectTask(taskId) {
+            currentTaskId = taskId;
+            const taskContent = document.getElementById('taskContent');
+            taskContent.innerHTML = '<div class="content-card text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl mb-3"></i><p>جاري التحميل...</p></div>';
+
+            const task = allTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const { data: records, error } = await supabaseClient
+                .from('follow_up_records')
+                .select('*')
+                .eq('task_id', taskId)
+                .order('full_name', { ascending: true });
+
+            if (error) {
+                taskContent.innerHTML = '<div class="content-card text-center text-red-400">فشل تحميل البيانات</div>';
+                return;
+            }
+
+            const total = records.length;
+            const contacted = records.filter(r => r.contacted).length;
+            const percentage = total > 0 ? Math.round((contacted / total) * 100) : 0;
+
+            taskContent.innerHTML = `
+                <div class="content-card">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-white mb-2">مهمة افتقاد - ${new Date(task.task_date).toLocaleDateString('ar-EG')}</h2>
+                            ${task.assigned_to_name ? `<p class="text-sm text-[var(--gold)] mb-1"><i class="fa-solid fa-user-tie ml-1"></i>معين لـ: ${task.assigned_to_name}</p>` : ''}
+                            ${task.notes ? `<p class="text-sm text-gray-400">${task.notes}</p>` : ''}
+                            <p class="text-xs text-gray-500 mt-1">أنشأها: ${task.created_by}</p>
+                        </div>
+                        <div class="text-left">
+                            <div class="stat-badge mb-2">
+                                <i class="fa-solid fa-users"></i>
+                                ${total} كشاف
+                            </div>
+                            <div class="stat-badge" style="background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #10b981;">
+                                <i class="fa-solid fa-check"></i>
+                                ${contacted} / ${total} (${percentage}%)
+                            </div>
+                        </div>
+                    </div>
+                    <div id="scoutsList"></div>
+                </div>
+            `;
+
+            const scoutsList = document.getElementById('scoutsList');
+            if (records.length === 0) {
+                scoutsList.innerHTML = '<div class="text-center text-gray-500 py-8">مفيش كشافين في المهمة دي</div>';
+                return;
+            }
+
+            records.forEach(record => {
+                const scoutDiv = document.createElement('div');
+                scoutDiv.className = 'scout-item' + (record.contacted ? ' contacted' : '');
+                scoutDiv.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        <input type="checkbox" 
+                               class="checkbox-custom" 
+                               ${record.contacted ? 'checked' : ''} 
+                               onchange="toggleContacted('${record.id}', this.checked)">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="text-white font-bold">${record.full_name}</h3>
+                                    <p class="text-sm text-gray-400 font-mono" dir="ltr">${record.phone || 'لا يوجد رقم'}</p>
+                                    <p class="text-xs text-[var(--gold)] mt-1">الكود: ${record.scout_id}</p>
+                                </div>
+                                ${record.contacted ? `
+                                    <div class="text-left text-xs text-gray-500">
+                                        <p><i class="fa-solid fa-user text-green-400"></i> ${record.contacted_by || '—'}</p>
+                                        <p><i class="fa-solid fa-clock text-green-400"></i> ${record.contacted_at ? new Date(record.contacted_at).toLocaleString('ar-EG') : '—'}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <textarea 
+                                class="form-input text-sm" 
+                                rows="2" 
+                                placeholder="ملاحظات الافتقاد..."
+                                onchange="updateComments('${record.id}', this.value)"
+                            >${record.comments || ''}</textarea>
+                        </div>
+                    </div>
+                `;
+                scoutsList.appendChild(scoutDiv);
+            });
+        }
+
+        async function toggleContacted(recordId, contacted) {
+            const updateData = {
+                contacted: contacted,
+                contacted_by: contacted ? currentUser.full_name : null,
+                contacted_at: contacted ? new Date().toISOString() : null
+            };
+
+            const { error } = await supabaseClient
+                .from('follow_up_records')
+                .update(updateData)
+                .eq('id', recordId);
+
+            if (error) {
+                alert('فشل التحديث: ' + error.message);
+                return;
+            }
+            selectTask(currentTaskId);
+        }
+
+        async function updateComments(recordId, comments) {
+            const { error } = await supabaseClient
+                .from('follow_up_records')
+                .update({ comments: comments })
+                .eq('id', recordId);
+
+            if (error) {
+                alert('فشل حفظ الملاحظات: ' + error.message);
+            }
+        }
+
+        async function openNewTaskModal() {
+            document.getElementById('newTaskDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('newTaskNotes').value = '';
+            document.getElementById('scoutsSelectionSection').style.display = 'none';
+            document.getElementById('scoutsCheckList').innerHTML = '';
+            document.getElementById('selectedScoutsCount').textContent = '0';
+
+            const leaderSelect = document.getElementById('taskLeaderSelect');
+            leaderSelect.innerHTML = '<option value="">جاري التحميل...</option>';
+
+            // تحديد الفرق المسموحة حسب قطاع قائد القطاع
+            const sectorTroopMap = {
+                'براعم': ['براعم'],
+                'ابتدائي': ['أشبال وزهرات', 'أشبال', 'زهرات'],
+                'اعدادي': ['مبتدئ ومرشدات', 'كشاف مبتدئ', 'مرشدات'],
+                'ثانوي': ['متقدم ورائدات', 'كشاف متقدم', 'رائدات'],
+                'مرشح جوالة': ['مرشح جوالة']
+            };
+            const allowedTroops = sectorTroopMap[userSector] || [];
+
+            console.log('Current Sector:', userSector);
+            console.log('Allowed Troops:', allowedTroops);
+
+            let query = supabaseClient
+                .from('leaders')
+                .select('id, full_name, troop, role, sector')
+                .eq('status', 'نشط')
+                .eq('role', 'TroopLeader');
+
+            // فلتر على أساس الفرق المسموحة
+            if (allowedTroops.length > 0) {
+                query = query.in('troop', allowedTroops);
+            }
+
+            const { data: leaders, error } = await query;
+            
+            console.log('Leaders from DB:', leaders);
+            
+            leaderSelect.innerHTML = '<option value="">-- اختر قائد --</option>';
+
+            if (error || !leaders || leaders.length === 0) {
+                leaderSelect.innerHTML = '<option value="">مفيش قادة في القطاع ده</option>';
+            } else {
+                availableLeaders = leaders;
+                leaders.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.id;
+                    opt.textContent = `${l.full_name} (${l.troop})`;
+                    opt.dataset.troop = l.troop;
+                    leaderSelect.appendChild(opt);
+                });
+            }
+            document.getElementById('newTaskModal').classList.remove('hidden');
+        }
+
+        async function onLeaderSelected() {
+            const leaderSelect = document.getElementById('taskLeaderSelect');
+            const selectedOption = leaderSelect.options[leaderSelect.selectedIndex];
+            const troop = selectedOption?.dataset?.troop;
+            const section = document.getElementById('scoutsSelectionSection');
+            const list = document.getElementById('scoutsCheckList');
+
+            if (!troop) {
+                section.style.display = 'none';
+                return;
+            }
+
+            list.innerHTML = '<div class="p-4 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin ml-2"></i>جاري التحميل...</div>';
+            section.style.display = 'block';
+
+            const troopStageMap = {
+                'براعم': 'براعم',
+                'أشبال وزهرات': 'ابتدائي', 'أشبال': 'ابتدائي', 'زهرات': 'ابتدائي',
+                'مبتدئ ومرشدات': 'اعدادي', 'كشاف مبتدئ': 'اعدادي', 'مرشدات': 'اعدادي',
+                'متقدم ورائدات': 'ثانوي', 'كشاف متقدم': 'ثانوي', 'رائدات': 'ثانوي',
+                'مرشح جوالة': 'مرشح جوالة',
+                'عشيرة الجوالة': 'عشيرة جوالة'
+            };
+            const stage = troopStageMap[troop];
+
+            const { data: scouts, error } = await supabaseClient
+                .from('scouts')
+                .select('scout_id, full_name, personal_phone, leader_sync_id')
+                .eq('school_stage', stage)
+                .eq('status', 'مقبول')
+                .order('full_name');
+
+            // خاص: فلترة عشيرة الجوالة للقادة المتزامنين فقط
+            let filteredScouts = scouts;
+            if (stage === 'عشيرة جوالة' && scouts) {
+                filteredScouts = scouts.filter(s => s.leader_sync_id !== null);
+                console.log('🏕️ عشيرة الجوالة: فلترة القادة المتزامنين فقط في follow_up');
+            }
+
+            if (error || !filteredScouts || filteredScouts.length === 0) {
+                list.innerHTML = '<div class="p-4 text-center text-gray-500">مفيش كشافين في الفرقة دي</div>';
+                availableScouts = [];
+                return;
+            }
+
+            availableScouts = filteredScouts;
+            list.innerHTML = '';
+            filteredScouts.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-3 px-4 py-2 border-b border-[rgba(201,168,76,0.08)] last:border-0';
+                div.innerHTML = `
+                    <input type="checkbox" class="scout-checkbox" value="${s.scout_id}"
+                           data-name="${s.full_name}" data-phone="${s.personal_phone || ''}"
+                           onchange="updateSelectedCount()"
+                           style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold);">
+                    <div class="flex-1">
+                        <p class="text-white text-sm font-medium">${s.full_name}</p>
+                        <p class="text-gray-500 text-xs font-mono" dir="ltr">${s.personal_phone || 'لا يوجد رقم'}</p>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checked = document.querySelectorAll('.scout-checkbox:checked').length;
+            document.getElementById('selectedScoutsCount').textContent = checked;
+        }
+
+        function selectAllScouts() {
+            document.querySelectorAll('.scout-checkbox').forEach(cb => cb.checked = true);
+            updateSelectedCount();
+        }
+
+        function deselectAllScouts() {
+            document.querySelectorAll('.scout-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        }
+
+        function closeNewTaskModal() {
+            document.getElementById('newTaskModal').classList.add('hidden');
+        }
+
+        async function createNewTask() {
+            const taskDate = document.getElementById('newTaskDate').value;
+            const notes = document.getElementById('newTaskNotes').value.trim();
+            const leaderSelect = document.getElementById('taskLeaderSelect');
+            const selectedLeaderId = leaderSelect.value;
+            
+            let selectedLeaderName = leaderSelect.options[leaderSelect.selectedIndex]?.textContent || '';
+            selectedLeaderName = selectedLeaderName.split('(')[0].trim(); 
+
+            if (!taskDate || !selectedLeaderId) {
+                alert('من فضلك اكمل البيانات المطلوبة');
+                return;
+            }
+
+            const checkedBoxes = document.querySelectorAll('.scout-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('من فضلك اختر كشاف واحد على الأقل');
+                return;
+            }
+
+            const selectedScouts = Array.from(checkedBoxes).map(cb => ({
+                scout_id: cb.value,
+                full_name: cb.dataset.name,
+                phone: cb.dataset.phone || null
+            }));
+
+            const { data: newTask, error: taskError } = await supabaseClient
+                .from('follow_up_tasks')
+                .insert([{
+                    task_date: taskDate,
+                    sector: userSector,
+                    created_by: currentUser.full_name,
+                    assigned_to: selectedLeaderId,
+                    assigned_to_name: selectedLeaderName,
+                    notes: notes
+                }])
+                .select()
+                .single();
+
+            if (taskError) {
+                alert('فشل إنشاء المهمة: ' + taskError.message);
+                return;
+            }
+
+            const records = selectedScouts.map(scout => ({
+                task_id: newTask.id,
+                scout_id: scout.scout_id,
+                full_name: scout.full_name,
+                phone: scout.phone
+            }));
+
+            const { error: recordsError } = await supabaseClient
+                .from('follow_up_records')
+                .insert(records);
+
+            if (recordsError) {
+                alert('فشل إضافة الكشافين: ' + recordsError.message);
+                return;
+            }
+
+            alert(`تم إنشاء المهمة بنجاح! (${selectedScouts.length} كشاف)`);
+            closeNewTaskModal();
+            loadTasks();
+        }
+
+        async function deleteTask(taskId) {
+            if (!confirm('متأكد من حذف المهمة دي؟ هيتحذف كل السجلات المرتبطة بيها.')) return;
+
+            const { error } = await supabaseClient
+                .from('follow_up_tasks')
+                .delete()
+                .eq('id', taskId);
+
+            if (error) {
+                alert('فشل الحذف: ' + error.message);
+                return;
+            }
+
+            alert('تم حذف المهمة بنجاح');
+            loadTasks();
+        }
+
+        loadTasks();
+    </script>
+</body>
+</html>

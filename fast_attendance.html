@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تمام الغياب الشامل - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: #c0c0c0; }
+        nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); }
+        .table-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        thead tr { background: var(--dark3); border-bottom: 1px solid var(--border); color: var(--gold); }
+        tbody tr { border-bottom: 1px solid rgba(201,168,76,0.08); transition: background 0.15s; }
+        tbody tr:hover { background: rgba(201,168,76,0.05); }
+        .form-select { background: var(--dark3); color: white; border: 1px solid var(--border); border-radius: 6px; padding: 6px; font-size: 0.85rem; outline: none; width: 100%; }
+        .form-select:disabled { opacity: 0.5; cursor: not-allowed; }
+        .form-input { background: var(--dark3); color: white; border: 1px solid var(--border); border-radius: 6px; padding: 8px; outline: none; width: 100%; color-scheme: dark; }
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #a8832a 100%); color: #0d0d0d; font-weight: 700; transition: 0.2s; border-radius: 8px; padding: 10px 20px; }
+        .btn-gold:hover { filter: brightness(1.15); }
+        .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+        .search-input { background: var(--dark3); border: 1px solid var(--border); color: #fff; border-radius: 8px; padding: 0.6rem 2.5rem 0.6rem 0.75rem; width: 100%; outline: none; }
+    </style>
+</head>
+<body>
+    <nav class="p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+            <button onclick="window.location.href='home.html'" class="text-xl text-gray-500 hover:text-[var(--gold)] transition" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+            <div>
+                <h1 class="text-lg font-bold text-white">تمام الغياب الشامل</h1>
+                <p class="text-xs text-[var(--gold)]" id="troopNameLabel">جاري التحميل...</p>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-6 px-4 mb-10">
+        <div class="flex flex-col md:flex-row justify-between items-end gap-4 mb-6 bg-[var(--dark2)] p-4 rounded-xl border border-[var(--border)]">
+            <div class="w-full md:w-1/3 relative">
+                <label class="block text-xs font-bold text-[var(--gold)] mb-2">ابحث بالاسم</label>
+                <input type="text" id="searchInput" placeholder="ابحث عن كشاف..." class="search-input" oninput="filterScouts()">
+                <i class="fa-solid fa-search absolute right-3 top-9" style="color: var(--gold); font-size: 0.85rem;"></i>
+            </div>
+            <div class="w-full md:w-1/3">
+                <label class="block text-xs font-bold text-[var(--gold)] mb-2">تاريخ الاجتماع</label>
+                <input type="date" id="sessionDate" class="form-input" required>
+            </div>
+            <div class="w-full md:w-auto">
+                <button onclick="saveAttendance()" id="saveBtn" class="btn-gold w-full md:w-auto flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ تقييمات اليوم
+                </button>
+            </div>
+        </div>
+
+        <div class="table-card overflow-x-auto">
+            <table class="w-full text-right whitespace-nowrap">
+                <thead>
+                    <tr>
+                        <th class="p-4">اسم الكشاف</th>
+                        <th class="p-4">المرحلة</th>
+                        <th class="p-4 w-32">الحضور (5)</th>
+                        <th class="p-4 w-24">الالتزام (3)</th>
+                        <th class="p-4 w-24">الزي (3)</th>
+                        <th class="p-4 w-24">الكناشة (3)</th>
+                    </tr>
+                </thead>
+                <tbody id="scoutsBody">
+                    <tr><td colspan="6" class="p-8 text-center text-gray-500">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('scout_leader_session') || 'null');
+        if (!currentUser) window.location.href = 'index.html';
+
+        // Label
+        if (['Master', 'General'].includes(currentUser.role)) {
+            document.getElementById('troopNameLabel').textContent = 'كل المجموعة';
+        } else if (currentUser.role === 'SectorLeader') {
+            document.getElementById('troopNameLabel').textContent = `قطاع: ${currentUser.sector || ''}`;
+        } else {
+            document.getElementById('troopNameLabel').textContent = `فرقة: ${currentUser.troop || ''}`;
+        }
+
+        document.getElementById('sessionDate').valueAsDate = new Date();
+
+        // Mapping: troop/sector → school_stage (يدعم الأسماء القديمة والموحدة)
+        function getDbSchoolStage(troopOrSector) {
+            if (!troopOrSector) return null;
+            const raw = String(troopOrSector).trim();
+            const norm = { 'أشبال': 'أشبال وزهرات', 'زهرات': 'أشبال وزهرات', 'كشاف مبتدئ': 'مبتدئ ومرشدات', 'مرشدات': 'مبتدئ ومرشدات', 'كشاف متقدم': 'متقدم ورائدات', 'رائدات': 'متقدم ورائدات' };
+            const unified = norm[raw] || raw;
+            const map = {
+                'براعم': 'براعم', 'أشبال وزهرات': 'ابتدائي', 'مبتدئ ومرشدات': 'اعدادي', 'متقدم ورائدات': 'ثانوي',
+                'ابتدائي': 'ابتدائي', 'اعدادي': 'اعدادي', 'ثانوي': 'ثانوي'
+            };
+            return map[unified] || map[raw] || null;
+        }
+
+        let allScouts = [];
+
+        async function loadScouts() {
+            let query = supabaseClient
+                .from('scouts')
+                .select('scout_id, full_name, school_stage, patrol_id')
+                .eq('status', 'مقبول')
+                .order('full_name');
+
+            if (currentUser.role === 'TroopLeader' || currentUser.role === 'SectorLeader') {
+                const dbStage = getDbSchoolStage(currentUser.troop || currentUser.sector);
+                if (dbStage) query = query.eq('school_stage', dbStage);
+            }
+            // Master & General → no filter → see all
+
+            const { data, error } = await query;
+            const tbody = document.getElementById('scoutsBody');
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">مفيش كشافين متسجلين ليك!</td></tr>`;
+                return;
+            }
+            allScouts = data;
+            renderScouts(allScouts);
+        }
+
+        function renderScouts(scoutsToRender) {
+            const tbody = document.getElementById('scoutsBody');
+            tbody.innerHTML = '';
+
+            if (scoutsToRender.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">مفيش نتايج...</td></tr>`;
+                return;
+            }
+
+            scoutsToRender.forEach(s => {
+                const options0to3 = `<option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>`;
+                const row = document.createElement('tr');
+                row.className = 'scout-row';
+                row.dataset.id = s.scout_id;
+                row.dataset.name = s.full_name.toLowerCase();
+                row.innerHTML = `
+                    <td class="p-4 font-bold text-white">${s.full_name}</td>
+                    <td class="p-4 text-gray-400 text-sm">${s.school_stage || 'غير محدد'}</td>
+                    <td class="p-4">
+                        <select id="status_${s.scout_id}" class="form-select" onchange="handleStatusChange('${s.scout_id}')">
+                            <option value="لم يسجل" selected disabled>اختر...</option>
+                            <option value="حاضر">حاضر (5)</option>
+                            <option value="غائب">غائب (0)</option>
+                            <option value="إذن">إذن (0)</option>
+                        </select>
+                    </td>
+                    <td class="p-4"><select id="commit_${s.scout_id}" class="form-select" disabled>${options0to3}</select></td>
+                    <td class="p-4"><select id="uniform_${s.scout_id}" class="form-select" disabled>${options0to3}</select></td>
+                    <td class="p-4"><select id="activity_${s.scout_id}" class="form-select" disabled>${options0to3}</select></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterScouts() {
+            const term = document.getElementById('searchInput').value.toLowerCase().trim();
+            document.querySelectorAll('.scout-row').forEach(row => {
+                row.style.display = row.dataset.name.includes(term) ? '' : 'none';
+            });
+        }
+
+        function handleStatusChange(id) {
+            const status = document.getElementById(`status_${id}`).value;
+            const isAbsent = status !== 'حاضر';
+            ['commit', 'uniform', 'activity'].forEach(field => {
+                const el = document.getElementById(`${field}_${id}`);
+                if (isAbsent || status === 'لم يسجل') { el.value = '0'; el.disabled = true; }
+                else { el.disabled = false; }
+            });
+        }
+
+        async function saveAttendance() {
+            const date = document.getElementById('sessionDate').value;
+            if (!date) return alert('اختار تاريخ الاجتماع الأول');
+
+            const recordsToSave = [];
+
+            allScouts.forEach(s => {
+                const statusEl = document.getElementById(`status_${s.scout_id}`);
+                if (!statusEl) return;
+                const status = statusEl.value;
+                if (status === 'لم يسجل') return; // skip unset
+
+                recordsToSave.push({
+                    scout_id: s.scout_id,
+                    patrol_id: s.patrol_id || null,
+                    date: date,
+                    status: status,
+                    attendance_score: status === 'حاضر' ? 5 : 0,
+                    commitment_score: parseInt(document.getElementById(`commit_${s.scout_id}`).value),
+                    uniform_score: parseInt(document.getElementById(`uniform_${s.scout_id}`).value),
+                    activity_score: parseInt(document.getElementById(`activity_${s.scout_id}`).value),
+                    troop: currentUser.troop || currentUser.sector || 'الكل'
+                });
+            });
+
+            if (recordsToSave.length === 0) return alert('أنت مسجلتش حضور لأي كشاف!');
+
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            const { error } = await supabaseClient.from('attendance').insert(recordsToSave);
+
+            if (error) {
+                alert('حصل مشكلة: ' + error.message);
+            } else {
+                alert(`تم حفظ تقييمات (${recordsToSave.length}) كشاف بنجاح!`);
+                // Reset saved rows only
+                recordsToSave.forEach(rec => {
+                    const el = document.getElementById(`status_${rec.scout_id}`);
+                    if (el) { el.value = 'لم يسجل'; handleStatusChange(rec.scout_id); }
+                });
+            }
+
+            btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ تقييمات اليوم';
+        }
+
+        loadScouts();
+    </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>توثيق نظام AKS - أفا كيرلس الكشفية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--dark); color: var(--silver); min-height: 100vh; }
+        nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); }
+        .doc-shell { max-width: 1180px; margin: 0 auto; padding: 32px 20px 90px; }
+        .panel { background: var(--dark2); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 20px; }
+        h1, h2, h3 { color: #fff; }
+        h1 { font-size: 2rem; font-weight: 900; margin-bottom: 12px; }
+        h2 { font-size: 1.25rem; margin-bottom: 12px; border-right: 4px solid var(--gold); padding-right: 10px; }
+        h3 { font-size: 1rem; margin-bottom: 8px; }
+        p, li { color: var(--silver); line-height: 1.9; font-size: 0.92rem; }
+        ul { padding-right: 24px; }
+        .badge { display: inline-block; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: rgba(201,168,76,0.12); color: var(--gold); font-size: 0.75rem; font-weight: 700; margin-left: 6px; }
+        .role-block { border: 1px solid var(--border); background: var(--dark3); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .toc a { display: block; padding: 12px; border-radius: 10px; background: var(--dark3); border: 1px solid rgba(201,168,76,0.22); color: var(--gold); text-decoration: none; font-weight: 700; }
+        .toc a:hover { border-color: var(--gold); color: white; }
+    </style>
+</head>
+<body>
+    <nav class="p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png" class="w-12 h-12 object-contain rounded-full border border-[var(--gold)]">
+            <div>
+                <p class="text-xs font-bold tracking-widest" style="color: var(--gold)">AVA KIROLOS</p>
+                <p class="text-xs text-gray-400">AKS Scout Management</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-[var(--gold)] hover:text-[var(--gold-lt)] font-bold text-sm flex items-center gap-2 transition">
+                <i class="fa-solid fa-house"></i> الرئيسية
+            </button>
+            <button onclick="window.location.href='index.html'" class="text-red-500 hover:text-red-400 font-bold text-sm flex items-center gap-2 transition">
+                <i class="fa-solid fa-power-off"></i> تسجيل خروج
+            </button>
+        </div>
+    </nav>
+
+    <div class="doc-shell">
+        <section class="panel">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1>توثيق نظام AKS - أفا كيرلس الكشفية</h1>
+                    <br>
+                    <p class="text-sm text-gray-400">دليل المشروع، خريطة الصفحات، ونظام الصلاحيات</p>
+                </div>
+                <span class="badge">الإصدار 1.0</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>نظرة عامة على المشروع</h2>
+            <br>
+            <p>
+                هذا المشروع هو موقع مجموعة أفا كيرلس الكشفية (AKS)، وهو نظام لإدارة المجموعة يساعد في إدارة الكشافة، وحسابات القادة، والطلائع، والحضور، ومهام المتابعة، والسجلات، والطلبات، والتقارير.
+            </p>
+            <p>
+                النظام مبني باستخدام صفحات ويب ثابتة تتصل بـ Supabase كخدمة لقاعدة البيانات الخلفية. تتم إدارة تسجيل الدخول والصلاحيات والبحث والتعديل والتصفية والرسوم البيانية وتصدير PDF وExcel وعمليات قاعدة البيانات من خلال JavaScript في الواجهة الأمامية واستعلامات Supabase.
+            </p>
+        </section>
+
+        <section class="panel">
+            <h2>خريطة الصفحات</h2>
+            <br>
+            <div class="toc">
+                <a href="index.html">صفحة تسجيل الدخول</a>
+                <a href="home.html">الصفحة الرئيسية</a>
+                <a href="dashboard.html">قاعدة بيانات الكشافة</a>
+                <a href="form.html">إضافة / تعديل كشاف</a>
+                <a href="follow_up.html">المتابعة</a>
+                <a href="attendance_history.html">سجل الحضور</a>
+                <a href="attendance_session.html">تسجيل الحضور</a>
+                <a href="fast_attendance.html">الحضور السريع</a>
+                <a href="benchmark.html">المقارنة والإحصائيات</a>
+                <a href="patrols.html">الطلائع</a>
+                <a href="leaders.html">القادة</a>
+                <a href="leader_requests.html">طلبات القادة</a>
+                <a href="requests.html">طلبات الكشافة</a>
+                <a href="sector_requests.html">طلبات القطاعات</a>
+                <a href="my_profile.html">الملف الشخصي</a>
+            </div>
+        </section>
+
+                <section class="panel">
+            <h2>صلاحيات المستخدمين</h2>
+             <br>
+            <div class="role-block">
+                <h3>المسؤول الرئيسي  <span> Master </span> </h3>
+                <p>
+                    ده أعلى مستوى صلاحيات في السيستم، وبيقدر يدخل على كل الصفحات ويشوف كل البيانات.
+                    يقدر يوافق على طلبات القادة والكشافة، ويدير حسابات القادة، ويشوف كل القطاعات，
+                    ويتحكم في كل العمليات الإدارية في السيستم.
+                </p>
+            </div>
+
+            <div class="role-block">
+                <h3>القائد العام </h3>
+                <p>
+                    عنده صلاحيات واسعة على مستوى المجموعة كلها. يقدر يدخل على لوحات الإدارة，
+                    ويوافق على طلبات القادة والكشافة، ويتابع ويدير العمليات العامة الخاصة بالمجموعة.
+                </p>
+            </div>
+
+            <div class="role-block">
+                <h3>قائد القطاع</h3>
+                <p>
+                    بيقدر يشوف القطاع أو المرحلة المسؤول عنها بس. يقدر يتابع ويدير بيانات الكشافة
+                    والطلائع الخاصة بقطاعه، وكمان يراجع الطلبات الخاصة بالقطاع.
+                </p>
+            </div>
+
+            <div class="role-block">
+                <h3>قائد الفرقة</h3>
+                <p>
+                    بيقدر يشوف الكشافة والطلائع اللي تابعين للفرقة المسؤول عنها. يقدر يعمل ويتابع
+                    مهام المتابعة الخاصة بيه، وفي الحالات اللي مش مسموح له فيها يعدّل البيانات بشكل مباشر،
+                    بيبعت طلب تعديل للمسؤولين الأعلى عشان يتم مراجعته واعتماده.
+                </p>
+            </div>
+
+            <div class="role-block">
+                <h3>عشيرة</h3>
+                <p>
+                    عنده صلاحية دخول محدودة. يقدر يسجل الدخول للسيستم، لكن الوصول لبيانات الكشافة
+                    والعمليات الأساسية بيكون مقفول أو محدود حسب الصلاحيات المسموح بيها.
+                </p>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>جدول الصلاحيات</h2>
+            <br>
+            <table class="w-full text-sm text-right border-collapse">
+                <thead>
+                    <tr class="border-b border-[var(--border)]">
+                        <th class="p-3 text-[var(--gold)]">الصفحة / القسم</th>
+                        <th class="p-3 text-[var(--gold)]">Master</th>
+                        <th class="p-3 text-[var(--gold)]">القائد العام</th>
+                        <th class="p-3 text-[var(--gold)]">قائد القطاع</th>
+                        <th class="p-3 text-[var(--gold)]">قائد الفرقة</th>
+                        <th class="p-3 text-[var(--gold)]">عشيرة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-[rgba(255,255,255,0.08)]">
+                        <td class="p-3">قاعدة بيانات الكشافة</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">القطاع</td>
+                        <td class="p-3">الفرقة</td>
+                        <td class="p-3">لا</td>
+                    </tr>
+                    <tr class="border-b border-[rgba(255,255,255,0.08)]">
+                        <td class="p-3">إضافة كشاف</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">لا direct</td>
+                        <td class="p-3">لا</td>
+                    </tr>
+                    <tr class="border-b border-[rgba(255,255,255,0.08)]">
+                        <td class="p-3">الطلبات</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">مراجعة القطاع</td>
+                        <td class="p-3">طلب</td>
+                        <td class="p-3">لا</td>
+                    </tr>
+                    <tr class="border-b border-[rgba(255,255,255,0.08)]">
+                        <td class="p-3">إدارة القادة</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">لا</td>
+                        <td class="p-3">لا</td>
+                        <td class="p-3">لا</td>
+                    </tr>
+                    <tr>
+                        <td class="p-3">مهام المتابعة</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">نعم</td>
+                        <td class="p-3">المهام المسندة فقط</td>
+                        <td class="p-3">لا</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="panel">
+            <h2>جداول البيانات الأساسية</h2>
+            <br>
+            <ul>
+                <li><strong>leaders:</strong> حسابات تسجيل الدخول وتعريف الصلاحيات.</li>
+                <li><strong>scouts:</strong> بيانات وملفات الكشافة.</li>
+                <li><strong>attendance:</strong> سجلات الحضور والتقييم.</li>
+                <li><strong>patrols:</strong> أسماء الطلائع وعلاقتها بالفرقة والقطاع.</li>
+                <li><strong>scout_requests:</strong> طلبات تعديل أو حذف بيانات الكشافة.</li>
+                <li><strong>follow_up_tasks:</strong> مهام المتابعة مع بيانات القائد المسؤول عنها.</li>
+            </ul>
+        </section>
+
+        <section class="panel">
+            <h2>طريقة استخدام الموقع</h2>
+            <br>
+            <ol>
+                <li>افتح صفحة تسجيل الدخول من <code>index.html</code>.</li>
+                <li>سجّل الدخول باستخدام اسم المستخدم وكلمة المرور الخاصة بالقائد من جدول `leaders`.</li>
+                <li>بعد تسجيل الدخول بنجاح يتم حفظ الجلسة في المتصفح.</li>
+                <li>استخدم الكروت الموجودة في الصفحة الرئيسية للانتقال إلى أقسام النظام المختلفة.</li>
+                <li>استخدم صفحة `dashboard.html` للبحث والتصفية ومراجعة وإدارة بيانات الكشافة.</li>
+                <li>الصلاحيات الأعلى تقوم بمراجعة واعتماد الطلبات التي ينشئها المستخدمون أصحاب الصلاحيات الأقل.</li>
+            </ol>
+        </section>
+
+        <section class="panel">
+            <h2>ملاحظات الأمان والتشغيل</h2>
+            <br>
+            <p>
+                الإصدار الحالي يحفظ جلسة القائد الذي قام بتسجيل الدخول داخل المتصفح باستخدام `localStorage`، ويتم تنفيذ معظم عمليات قاعدة البيانات من خلال استدعاءات Supabase في الواجهة الأمامية. في حالة استخدام النظام بشكل إنتاجي، يُفضّل نقل عمليات الكتابة خلف API آمن وتفعيل سياسات Row Level Security في Supabase.
+            </p>
+        </section>
+
+        <section class="panel">
+            <h2>الشكاوى والاقتراحات والدعم الفني</h2>
+            <br>
+            <p>
+                لو عندك أي شكوى أو اقتراح يساعدنا نطوّر الموقع، تقدر تبعته من خلال نموذج الشكاوى والاقتراحات:
+            </p>
+            <br>
+            <div class="role-block" style="text-align:center;">
+                <a href="https://forms.gle/PuPgxKWEc5JyJg4F6" target="_blank"
+                   style="display:inline-block; padding:12px 20px; border-radius:10px; background:rgba(201,168,76,0.15); border:1px solid var(--gold); color:var(--gold); text-decoration:none; font-weight:800;">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    نموذج الشكاوى والاقتراحات
+                </a>
+            </div>
+            <p>
+                وتقدروا تكلموا سعيد في أي وقت لو لقيتوا <span style="color:var(--gold); font-weight:700;">Bug</span>
+                أو فيه حاجة مش فاهمينها في الموقع 🙏
+            </p>
+            <br>
+            <div class="role-block">
+                <h3>كيرلس سعيد — Technical Support </h3>
+                <p style="margin:0; direction:ltr; text-align:right;">
+                    01211201408
+                </p>
+            </div>
+            <p style="text-align:center; color:var(--gold); font-weight:900; font-size:1.05rem; margin-top:18px;">
+                <ol style="text-align:center; color:var(--gold); font-weight:900; font-size:1.05rem; margin-top:18px;">
+                    <li style="text-align:center; color:var(--gold); font-weight:900; font-size:1.05rem; margin-top:18px;">الله</li>
+                    <li style="text-align:center; color:var(--gold); font-weight:900; font-size:1.05rem; margin-top:18px;">الوطن</li>
+                    <li style="text-align:center; color:var(--gold); font-weight:900; font-size:1.05rem; margin-top:18px;">⚜️ AKS ⚜️ </li>
+                </ol>
+            </p>
+        </section>
+    </div>
+</body>
+</html>

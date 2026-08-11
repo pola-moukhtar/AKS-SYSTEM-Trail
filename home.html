@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرئيسية - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: var(--silver); min-height: 100vh; }
+        nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); box-shadow: 0 2px 20px rgba(201,168,76,0.1); }
+        .dash-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); cursor: pointer; position: relative; overflow: hidden; }
+        .dash-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0; transition: opacity 0.3s; }
+        .dash-card:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0,0,0,0.8); border-color: var(--gold); }
+        .dash-card:hover::before { opacity: 1; }
+        .dash-card i { font-size: 2.5rem; color: var(--gold); margin-bottom: 16px; transition: transform 0.3s; }
+        .dash-card:hover i { transform: scale(1.1); }
+        .dash-card h3 { color: #fff; font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+        .dash-card p { color: #888; font-size: 0.85rem; }
+        .dash-card.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
+        .dash-card.disabled:hover { transform: none; box-shadow: none; border-color: var(--border); }
+        .dash-card.disabled:hover i { transform: none; }
+        .badge { position: absolute; top: 16px; right: 16px; background: #e53e3e; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 20px; }
+        .role-tag { display: inline-block; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-top: 2px; }
+        .role-master { background: rgba(201,168,76,0.2); color: var(--gold); border: 1px solid rgba(201,168,76,0.4); }
+        .role-general { background: rgba(100,149,237,0.2); color: #6495ed; border: 1px solid rgba(100,149,237,0.4); }
+        .role-sector { background: rgba(60,179,113,0.2); color: #3cb371; border: 1px solid rgba(60,179,113,0.4); }
+        .role-troop { background: rgba(192,192,192,0.15); color: #c0c0c0; border: 1px solid rgba(192,192,192,0.3); }
+        .leader-card { transition: all 0.2s ease; }
+        .leader-card.featured-leader { border-color: var(--gold); background: linear-gradient(135deg, rgba(201,168,76,0.16), var(--dark3)); box-shadow: inset 0 0 0 1px rgba(201,168,76,0.35); }
+        .leader-card.featured-leader .leader-avatar { color: var(--gold); border-color: var(--gold); background: rgba(201,168,76,0.2); }
+        .leader-card.featured-leader .leader-role { color: var(--gold-lt); }
+    </style>
+</head>
+<body>
+    <nav class="p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png" class="w-12 h-12 object-contain rounded-full border border-[var(--gold)]">
+            <div>
+                <p class="text-xs font-bold tracking-widest" style="color: var(--gold)">AVA KIROLOS</p>
+                <p class="text-xs text-gray-400" id="userNameDisplay">مرحباً، يا قائد</p>
+                <span id="roleTag" class="role-tag"></span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+             <button onclick="window.location.href='documentation.html'" class="text-[var(--gold)] hover:text-[var(--gold-lt)] font-bold text-sm flex items-center gap-2 transition">
+                <i class="fa-solid fa-book"></i> التوثيق
+            </button>
+            <button onclick="window.location.href='my_profile.html'" class="text-[var(--gold)] hover:text-[var(--gold-lt)] font-bold text-sm flex items-center gap-2 transition">
+                <i class="fa-solid fa-user-gear"></i> بياناتي
+            </button>
+            <button onclick="logout()" class="text-red-500 hover:text-red-400 font-bold text-sm flex items-center gap-2 transition">
+                <i class="fa-solid fa-power-off"></i> تسجيل خروج
+            </button>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto w-full p-6 mt-2">
+
+        
+        <h2 class="text-2xl font-bold text-white mb-6 border-r-4 pr-3" style="border-color: var(--gold);">لوحة التحكم الرئيسية</h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- الكل يشوفهم -->
+            <div class="dash-card" onclick="window.location.href='dashboard.html'">
+                <i class="fa-solid fa-users"></i>
+                <h3>عرض المجموعة</h3>
+                <p>قاعدة بيانات الكشافين، التعديل، والبحث</p>
+            </div>
+            
+            <div class="dash-card" onclick="window.location.href='form.html'">
+                <i class="fa-solid fa-user-plus"></i>
+                <h3>إضافة كشاف</h3>
+                <p>تسجيل بيانات كشاف جديد في السيستم</p>
+            </div>
+
+            <div class="dash-card" onclick="window.location.href='follow_up.html'">
+                <i class="fa-solid fa-phone"></i>
+                <h3>الافتقاد</h3>
+                <p>متابعة الكشافين والاتصال بهم</p>
+            </div>
+            
+            <div class="dash-card" onclick="window.location.href='attendance_history.html'">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <h3>سجل الحضور</h3>
+                <p>عرض سجل الحضور بالتاريخ والتفاصيل</p>
+            </div>
+            
+            <div class="dash-card" onclick="window.location.href='benchmark.html'">
+                <i class="fa-solid fa-chart-line"></i>
+                <h3>مقارنة القطاعات</h3>
+                <p>نسبة الحضور العامة لكل قطاع</p>
+            </div>
+            <div class="dash-card" onclick="window.location.href='documentation.html'">
+                <i class="fa-solid fa-book"></i>
+                <h3>التوثيق</h3>
+                <p>خريطة المشروع، الصفحات، والأدوار</p>
+            </div>
+            <!-- TroopLeader + SectorLeader + General + Master -->
+            <div class="dash-card role-troop-up hidden" onclick="window.location.href='patrols.html'">
+                <i class="fa-solid fa-shield-halved"></i>
+                <h3>الطلايع</h3>
+                <p>إدارة الطلايع وتوزيع الكشافين</p>
+            </div>
+            
+            <!-- SectorLeader + General + Master -->
+            <div class="dash-card role-sector-up hidden" onclick="window.location.href='sector_requests.html'">
+                <span class="badge hidden" id="sectorReqBadge">0</span>
+                <i class="fa-solid fa-inbox"></i>
+                <h3>طلبات الطلايع</h3>
+                <p>مراجعة طلبات إنشاء وتعديل الطلايع</p>
+            </div>
+            
+            <!-- SectorLeader + General + Master -->
+            <div class="dash-card role-sector-up hidden" onclick="window.location.href='requests.html'">
+                <span class="badge hidden" id="scoutReqBadge">0</span>
+                <i class="fa-solid fa-bell"></i>
+                <h3>طلبات الإضافة</h3>
+                <p>مراجعة الكشافين الجدد وقبولهم</p>
+            </div>
+            
+            <!-- General + Master only -->
+            <div class="dash-card role-admin hidden" onclick="window.location.href='leader_requests.html'">
+                <i class="fa-solid fa-user-shield"></i>
+                <h3>طلبات القادة الجدد</h3>
+                <p>تفعيل حسابات القادة وتحديد صلاحياتهم</p>
+            </div>
+            
+            <div class="dash-card role-admin hidden" onclick="window.location.href='leaders.html'">
+                <i class="fa-solid fa-user-tie"></i>
+                <h3>إدارة القادة</h3>
+                <p>إضافة قادة، توزيع الفرق، وتعديل الصلاحيات</p>
+            </div>
+            
+        </div>
+        <br>
+        <!-- قسم القطاع / الفرقة -->
+        <div class="bg-[var(--dark2)] border border-[var(--border)] rounded-xl p-5 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div>
+                    <p class="text-xs text-[var(--gold)] font-bold">قطاعك / فرقتك</p>
+                    <p class="text-xl font-bold text-white mt-1" id="userSector">—</p>
+                </div>
+                <div class="text-left md:text-right">
+                    <p class="text-xs text-gray-500">تاريخ اليوم</p>
+                    <p class="text-sm text-gray-400" id="lastLogin">—</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- القادة في نفس القطاع -->
+        <div class="bg-[var(--dark2)] border border-[var(--border)] rounded-xl p-5 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-md font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-users text-[var(--gold)]"></i>
+                    القادة معاك في القطاع
+                </h3>
+                <span id="leadersCount" class="text-xs px-2 py-1 bg-[rgba(201,168,76,0.1)] text-[var(--gold)] rounded-full border border-[rgba(201,168,76,0.3)]">0</span>
+            </div>
+            <div id="leadersList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="text-center text-gray-500 py-4 col-span-full">جاري التحميل...</div>
+            </div>
+        </div>
+        
+        
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const sessionData = localStorage.getItem('scout_leader_session');
+        if (!sessionData) window.location.href = 'index.html';
+        const user = JSON.parse(sessionData);
+
+        const roleNames = { Master: 'الماستر', General: 'القائد العام', SectorLeader: 'قائد القطاع', TroopLeader: 'قائد الفرقة', Viewer: 'مشاهد' };
+        const roleClasses = { Master: 'role-master', General: 'role-general', SectorLeader: 'role-sector', TroopLeader: 'role-troop', Viewer: 'role-troop' };
+
+        document.getElementById('userNameDisplay').textContent = `مرحباً، ${user.full_name}`;
+        const tag = document.getElementById('roleTag');
+        tag.textContent = roleNames[user.role] || user.role;
+        tag.classList.add(roleClasses[user.role] || 'role-troop');
+
+        console.log('👤 User Info:', {
+            role: user.role,
+            sector: user.sector,
+            troop: user.troop,
+            full_name: user.full_name
+        });
+
+        if (user.role === 'Master') {
+            document.getElementById('userSector').textContent = 'كل المجموعة (ماستر)';
+        } else if (user.role === 'General') {
+            document.getElementById('userSector').textContent = 'كل المجموعة (قائد عام)';
+        } else if (user.role === 'SectorLeader') {
+            document.getElementById('userSector').textContent = `قطاع ${user.sector || '—'}`;
+        } else if (user.role === 'TroopLeader') {
+            document.getElementById('userSector').textContent = `فرقة ${user.troop || '—'}`;
+        } else {
+            document.getElementById('userSector').textContent = '—';
+        }
+
+        document.getElementById('lastLogin').textContent = new Date().toLocaleDateString('ar-EG');
+
+        // Show cards by role
+        const role = user.role;
+        if (['TroopLeader', 'SectorLeader', 'General', 'Master'].includes(role)) {
+            document.querySelectorAll('.role-troop-up').forEach(el => el.classList.remove('hidden'));
+        }
+        if (['SectorLeader', 'General', 'Master'].includes(role)) {
+            document.querySelectorAll('.role-sector-up').forEach(el => el.classList.remove('hidden'));
+        }
+        if (['General', 'Master'].includes(role)) {
+            document.querySelectorAll('.role-admin').forEach(el => el.classList.remove('hidden'));
+        }
+
+        // ===== Load peer leaders =====
+        // Mapping: troop → sector (موحدة)
+        const troopToSector = {
+            'براعم': 'براعم',
+            'أشبال وزهرات': 'ابتدائي',
+            'أشبال': 'ابتدائي',
+            'زهرات': 'ابتدائي',
+            'مبتدئ ومرشدات': 'اعدادي',
+            'كشاف مبتدئ': 'اعدادي',
+            'مرشدات': 'اعدادي',
+            'متقدم ورائدات': 'ثانوي',
+            'كشاف متقدم': 'ثانوي',
+            'رائدات': 'ثانوي',
+            'مرشح جوالة': 'مرشح جوالة',
+            'عشيرة الجوالة': 'عشيرة جوالة'
+        };
+
+        async function loadLeadersInSameSector() {
+            const leadersDiv = document.getElementById('leadersList');
+            
+            console.log('🔍 Loading leaders for user:', {
+                role: user.role,
+                sector: user.sector,
+                troop: user.troop,
+                username: user.username
+            });
+            
+            let query = supabaseClient.from('leaders').select('full_name, role, troop, sector, username').eq('status', 'نشط');
+
+            if (user.role === 'Master') {
+               // ماستر يشوف كل القادة النشطين غير نفسه، بما فيهم الماستر و القائد العام إن وجدوا
+                query = query.neq('username', user.username);
+            } else if (user.role === 'General') {
+                 // القائد العام يشوف كل القادة النشطين غير نفسه، بما فيهم الماستر والقائد العام إن وجدوا
+                query = query.neq('username', user.username);
+            } else if (user.role === 'SectorLeader') {
+                query = query.neq('username', user.username).neq('role', 'Master').neq('role', 'General');
+            } else if (user.role === 'TroopLeader') {
+                query = query.neq('username', user.username).neq('role', 'Master').neq('role', 'General');
+            } else {
+                leadersDiv.innerHTML = '<div class="text-center text-gray-500 py-4 col-span-full">—</div>';
+                document.getElementById('leadersCount').textContent = '0';
+                return;
+            }
+
+            const { data, error } = await query;
+            
+            console.log('📦 Fetched leaders:', data);
+            
+            if (error || !data) {
+                console.error('❌ Error loading leaders:', error);
+                leadersDiv.innerHTML = '<div class="text-center text-gray-500 py-4 col-span-full">خطأ في التحميل</div>';
+                return;
+            }
+
+            // Client-side sector filtering for TroopLeader and SectorLeader
+            let filtered = data;
+
+            if (user.role === 'SectorLeader') {
+                // قائد القطاع يشوف:
+                // 1. قادة قطاع تانيين في نفس القطاع
+                // 2. قادة فرق اللي فرقهم تابعة لنفس القطاع
+                const sectorTroopMap = {
+                    'براعم': ['براعم'],
+                    'ابتدائي': ['أشبال وزهرات', 'أشبال', 'زهرات'],
+                    'اعدادي': ['مبتدئ ومرشدات', 'كشاف مبتدئ', 'مرشدات'],
+                    'ثانوي': ['متقدم ورائدات', 'كشاف متقدم', 'رائدات'],
+                    'مرشح جوالة': ['مرشح جوالة'],
+                    'عشيرة جوالة': ['عشيرة الجوالة']
+                };
+                const allowedTroops = sectorTroopMap[user.sector] || [];
+                
+                filtered = data.filter(l => {
+                    // قادة قطاع في نفس القطاع
+                    if (l.role === 'SectorLeader' && l.sector === user.sector) {
+                        return true;
+                    }
+                    // قادة فرق: نشوف لو فرقتهم تابعة للقطاع ده
+                    if (l.role === 'TroopLeader' && allowedTroops.includes(l.troop)) {
+                        return true;
+                    }
+                    return false;
+                });
+            } else if (user.role === 'TroopLeader') {
+                // قائد الفرقة يشوف:
+                // 1. قائد القطاع اللي فرقته تابعة ليه
+                // 2. قادة فرق تانيين في نفس القطاع
+                const myTroopSector = troopToSector[user.troop];
+                
+                filtered = data.filter(l => {
+                    if (l.role === 'SectorLeader') {
+                        // قائد القطاع اللي فرقتي تابعة ليه
+                        return l.sector === myTroopSector;
+                    }
+                    if (l.role === 'TroopLeader') {
+                        // قادة فرق تانيين في نفس القطاع
+                        const leaderSector = troopToSector[l.troop];
+                        return leaderSector === myTroopSector;
+                    }
+                    return false;
+                });
+            }
+
+            console.log('✅ Filtered leaders:', filtered);
+            
+            const rolePriorityByViewer = {
+                'Master': {
+                     'Master': 1,
+                    'General': 2,
+                    'SectorLeader': 3,
+                    'TroopLeader': 4,
+                    'Viewer': 5
+                },
+                'General': {
+                    'Master': 1,
+                    'General': 2,
+                    'SectorLeader': 3,
+                    'TroopLeader': 4,
+                    'Viewer': 5
+                },
+                'SectorLeader': {
+                    'SectorLeader': 1,
+                    'TroopLeader': 2,
+                    'Viewer': 3
+                },
+                'TroopLeader': {
+                    'SectorLeader': 1,
+                    'TroopLeader': 2,
+                    'Viewer': 3
+                }
+            };
+
+            const rolePriority = rolePriorityByViewer[user.role] || {
+                 'Master': 1,
+                'General': 2,
+                'SectorLeader': 3,
+                'TroopLeader': 4,
+                'Viewer': 5
+            };
+
+            filtered.sort((a, b) => {
+                const roleDiff = (rolePriority[a.role] || 99) - (rolePriority[b.role] || 99);
+                if (roleDiff !== 0) return roleDiff;
+                return (a.full_name || '').localeCompare(b.full_name || '', 'ar');
+            });
+
+            document.getElementById('leadersCount').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                leadersDiv.innerHTML = '<div class="text-center text-gray-500 py-4 col-span-full">مفيش قادة تانيين في قطاعك</div>';
+                return;
+            }
+
+            const roleNamesAr = { Master: 'ماستر', General: 'قائد عام', SectorLeader: 'قائد قطاع', TroopLeader: 'قائد فرقة', Viewer: 'مشاهد' };
+            const sectorNamesDisplay = { 
+                'براعم': 'براعم', 
+                'أشبال وزهرات': 'أشبال وزهرات',
+                'مبتدئ ومرشدات': 'مبتدئ ومرشدات',
+                'متقدم ورائدات': 'متقدم ورائدات'
+            };
+            
+            leadersDiv.innerHTML = filtered.map(l => {
+                const featured = ['Master', 'General', 'SectorLeader'].includes(l.role);
+                const featuredClass = featured ? 'featured-leader' : '';
+
+                return `<div class="leader-card bg-[var(--dark3)] border border-[var(--border)] rounded-xl p-3 flex items-center gap-3 ${featuredClass}">
+                    <div class="leader-avatar w-10 h-10 rounded-full bg-[rgba(201,168,76,0.15)] flex items-center justify-center text-[var(--gold)] border border-[rgba(201,168,76,0.2)]">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-white font-bold text-sm">${l.full_name}</p>
+                        <p class="leader-role text-xs text-gray-400">${roleNamesAr[l.role] || l.role}</p>
+                        <p class="text-xs text-[var(--gold)] mt-0.5">${l.role === 'SectorLeader' ? (sectorNamesDisplay[l.sector] || l.sector || '—') : (l.troop || '—')}</p>
+                    </div>
+                               </div>`;
+            }).join('');
+        }
+
+
+
+        // ===== Badges =====
+        async function loadBadges() {
+            if (['SectorLeader', 'General', 'Master'].includes(role)) {
+                let addCount = 0;
+                let changeCount = 0;
+
+                let scoutQuery = supabaseClient.from('scouts').select('scout_id', { count: 'exact', head: true }).eq('status', 'قيد الانتظار');
+                if (role === 'SectorLeader') {
+                    const sectorStageMap = { 'براعم': 'براعم', 'ابتدائي': 'ابتدائي', 'اعدادي': 'اعدادي', 'ثانوي': 'ثانوي', 'مرشح جوالة': 'مرشح جوالة' };
+                    const stage = sectorStageMap[user.sector] || user.sector;
+                    if (stage) scoutQuery = scoutQuery.eq('school_stage', stage);
+                }
+                const { count: pendingAdd } = await scoutQuery;
+                addCount = pendingAdd || 0;
+
+                let changeQuery = supabaseClient.from('scout_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+                if (role === 'SectorLeader') {
+                    const sectorStageMap = { 'براعم': 'براعم', 'ابتدائي': 'ابتدائي', 'اعدادي': 'اعدادي', 'ثانوي': 'ثانوي', 'مرشح جوالة': 'مرشح جوالة' };
+                    const stage = sectorStageMap[user.sector] || user.sector;
+                    if (stage) changeQuery = changeQuery.eq('school_stage', stage);
+                }
+                const { count: pendingChanges } = await changeQuery;
+                changeCount = pendingChanges || 0;
+
+                const totalScoutReqs = addCount + changeCount;
+                if (totalScoutReqs > 0) {
+                    const badge = document.getElementById('scoutReqBadge');
+                    badge.textContent = totalScoutReqs;
+                    badge.classList.remove('hidden');
+                }
+
+                // Patrol requests badge
+                let patrolQuery = supabaseClient.from('patrol_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+                if (role === 'SectorLeader') {
+                    // خريطة الفرق الموحدة حسب القطاع
+                    const troopMap = {
+                        'براعم': ['براعم'],
+                        'ابتدائي': ['أشبال وزهرات', 'أشبال', 'زهرات'],
+                        'اعدادي': ['مبتدئ ومرشدات', 'كشاف مبتدئ', 'مرشدات'],
+                        'ثانوي': ['متقدم ورائدات', 'كشاف متقدم', 'رائدات']
+                    };
+                    const allowed = troopMap[user.sector] || [];
+                    if (allowed.length > 0) patrolQuery = patrolQuery.in('troop', allowed);
+                }
+                const { count: patrolCount } = await patrolQuery;
+                if (patrolCount > 0) {
+                    const badge = document.getElementById('sectorReqBadge');
+                    badge.textContent = patrolCount;
+                    badge.classList.remove('hidden');
+                }
+            }
+        }
+
+        function logout() { localStorage.removeItem('scout_leader_session'); window.location.href = 'index.html'; }
+
+        loadLeadersInSameSector();
+        loadBadges();
+    </script>
+    <script>
+    if (['Master', 'General'].includes(user.role)) {
+        document.querySelectorAll('.role-troop-up').forEach(el => el.style.display = 'none');
+    }
+    </script>
+</body>
+</html>

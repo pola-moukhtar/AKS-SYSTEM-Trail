@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بياناتي الشخصية - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: var(--silver); }
+        nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); }
+        .profile-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 20px; }
+        .form-input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid rgba(201,168,76,0.2); border-radius: 8px; background: var(--dark3); color: #fff; outline: none; font-size: 0.9rem; }
+        .form-input:focus { border-color: var(--gold); }
+        .form-input:disabled { opacity: 0.6; cursor: not-allowed; background: var(--dark); }
+        .form-input option { background: var(--dark3); }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #a8832a 100%); color: #0d0d0d; font-weight: 700; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-gold:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .section-title { font-size: 0.85rem; font-weight: 700; color: var(--gold); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+        .info-badge { display: inline-block; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); padding: 4px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <nav class="p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+            <button onclick="window.location.href='home.html'" class="text-xl text-gray-500 hover:text-[var(--gold)] transition ml-2" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+            <div>
+                <h1 class="text-lg font-bold text-white">بياناتي الشخصية</h1>
+                <p class="text-xs text-gray-500" id="userRoleLabel">جاري التحميل...</p>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 pb-10">
+        <div class="profile-card">
+            <form id="profileForm" onsubmit="saveProfile(event)">
+                
+                <div class="section-title"><i class="fa-solid fa-user"></i> البيانات الأساسية</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="form-label">الاسم بالكامل *</label>
+                        <input type="text" id="fullName" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">رقم الموبايل *</label>
+                        <input type="text" id="phone" class="form-input" dir="ltr" required>
+                    </div>
+                    <div>
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" id="username" class="form-input" disabled>
+                    </div>
+                    <div>
+                        <label class="form-label">كلمة المرور *</label>
+                        <input type="text" id="password" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-shield-halved"></i> الصلاحيات (لا يمكن التعديل)</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="form-label">الرتبة</label>
+                        <input type="text" id="role" class="form-input" disabled>
+                    </div>
+                    <div id="troopContainer">
+                        <label class="form-label">الفرقة</label>
+                        <input type="text" id="troop" class="form-input" disabled>
+                    </div>
+                    <div id="sectorContainer" class="hidden">
+                        <label class="form-label">القطاع</label>
+                        <input type="text" id="sector" class="form-input" disabled>
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-briefcase"></i> الحالة الوظيفية/الدراسية</div>
+                <div class="mb-4">
+                    <label class="form-label">الحالة *</label>
+                    <select id="employmentStatus" class="form-input" onchange="toggleEmploymentFields()">
+                        <option value="بيدرس">بيدرس</option>
+                        <option value="شغال">شغال</option>
+                        <option value="لا يعمل">لا يعمل</option>
+                    </select>
+                </div>
+
+                <div id="studyFields" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="form-label">المرحلة الدراسية</label>
+                        <select id="educationLevel" class="form-input">
+                            <option value="">-- اختر --</option>
+                            <option value="جامعة">جامعة</option>
+                            <option value="دراسات عليا">دراسات عليا</option>
+                            <option value="ثانوي">ثانوي</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">الجامعة</label>
+                        <input type="text" id="university" class="form-input" placeholder="مثال: جامعة القاهرة">
+                    </div>
+                    <div>
+                        <label class="form-label">الكلية</label>
+                        <input type="text" id="faculty" class="form-input" placeholder="مثال: هندسة">
+                    </div>
+                    <div>
+                        <label class="form-label">السنة الدراسية</label>
+                        <input type="text" id="academicYear" class="form-input" placeholder="مثال: السنة الثانية">
+                    </div>
+                </div>
+
+                <div id="workFields" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="form-label">المسمى الوظيفي</label>
+                        <input type="text" id="jobTitle" class="form-input" placeholder="مثال: مهندس برمجيات">
+                    </div>
+                    <div>
+                        <label class="form-label">مكان العمل</label>
+                        <input type="text" id="workplace" class="form-input" placeholder="مثال: شركة XYZ">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">المؤهل الدراسي</label>
+                        <input type="text" id="educationLevelWork" class="form-input" placeholder="مثال: بكالوريوس هندسة">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-campground"></i> الخبرة الكشفية</div>
+                <div class="mb-6">
+                    <label class="form-label">الخبرة الكشفية السابقة</label>
+                    <textarea id="scoutingExperience" class="form-input" rows="4" style="resize:vertical" placeholder="مثال: خدمت في براعم لمدة سنتين، حاصل على شارة كذا..."></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
+                    <button type="button" onclick="window.location.href='home.html'" class="px-6 py-2 rounded-lg text-sm border border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" id="saveBtn" class="btn-gold px-8 py-2 rounded-lg text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('scout_leader_session') || 'null');
+        if (!currentUser) window.location.href = 'index.html';
+
+        async function loadProfile() {
+            const { data, error } = await supabaseClient
+                .from('leaders')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (error) {
+                alert('فشل تحميل البيانات: ' + error.message);
+                return;
+            }
+
+            // البيانات الأساسية
+            document.getElementById('fullName').value = data.full_name || '';
+            document.getElementById('phone').value = data.phone || '';
+            document.getElementById('username').value = data.username || '';
+            document.getElementById('password').value = data.password || '';
+
+            // الصلاحيات
+            const roleArabic = {
+                'Master': 'ماستر',
+                'General': 'قائد عام',
+                'SectorLeader': 'قائد قطاع',
+                'TroopLeader': 'قائد فرقة',
+                'Viewer': 'مشاهد'
+            };
+            document.getElementById('role').value = roleArabic[data.role] || data.role;
+            document.getElementById('userRoleLabel').textContent = roleArabic[data.role] || data.role;
+
+            if (data.role === 'TroopLeader') {
+                document.getElementById('troopContainer').classList.remove('hidden');
+                document.getElementById('troop').value = data.troop || '';
+            } else if (data.role === 'SectorLeader') {
+                document.getElementById('sectorContainer').classList.remove('hidden');
+                document.getElementById('sector').value = data.sector || '';
+            }
+
+            // الحالة الوظيفية
+            document.getElementById('employmentStatus').value = data.employment_status || 'بيدرس';
+            
+            // حقول الدراسة
+            document.getElementById('educationLevel').value = data.education_level || '';
+            document.getElementById('university').value = data.university || '';
+            document.getElementById('faculty').value = data.faculty || '';
+            document.getElementById('academicYear').value = data.academic_year || '';
+
+            // حقول العمل
+            document.getElementById('jobTitle').value = data.job_title || '';
+            document.getElementById('workplace').value = data.workplace || '';
+            document.getElementById('educationLevelWork').value = data.education_level || '';
+
+            // الخبرة الكشفية
+            document.getElementById('scoutingExperience').value = data.scouting_experience || '';
+
+            toggleEmploymentFields();
+        }
+
+        function toggleEmploymentFields() {
+            const status = document.getElementById('employmentStatus').value;
+            document.getElementById('studyFields').classList.toggle('hidden', status !== 'بيدرس');
+            document.getElementById('workFields').classList.toggle('hidden', status !== 'شغال');
+        }
+
+        async function saveProfile(event) {
+            event.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            const employmentStatus = document.getElementById('employmentStatus').value;
+
+            const updateData = {
+                full_name: document.getElementById('fullName').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                password: document.getElementById('password').value.trim(),
+                employment_status: employmentStatus,
+                scouting_experience: document.getElementById('scoutingExperience').value.trim() || null
+            };
+
+            // إضافة حقول الدراسة أو العمل حسب الحالة
+            if (employmentStatus === 'بيدرس') {
+                updateData.education_level = document.getElementById('educationLevel').value || null;
+                updateData.university = document.getElementById('university').value.trim() || null;
+                updateData.faculty = document.getElementById('faculty').value.trim() || null;
+                updateData.academic_year = document.getElementById('academicYear').value.trim() || null;
+                // مسح حقول العمل
+                updateData.job_title = null;
+                updateData.workplace = null;
+            } else if (employmentStatus === 'شغال') {
+                updateData.job_title = document.getElementById('jobTitle').value.trim() || null;
+                updateData.workplace = document.getElementById('workplace').value.trim() || null;
+                updateData.education_level = document.getElementById('educationLevelWork').value.trim() || null;
+                // مسح حقول الدراسة
+                updateData.university = null;
+                updateData.faculty = null;
+                updateData.academic_year = null;
+            } else {
+                // لا يعمل - مسح كل الحقول
+                updateData.education_level = null;
+                updateData.university = null;
+                updateData.faculty = null;
+                updateData.academic_year = null;
+                updateData.job_title = null;
+                updateData.workplace = null;
+            }
+
+            const { error } = await supabaseClient
+                .from('leaders')
+                .update(updateData)
+                .eq('id', currentUser.id);
+
+            if (error) {
+                alert('فشل الحفظ: ' + error.message);
+            } else {
+                // تحديث الـ session
+                currentUser.full_name = updateData.full_name;
+                localStorage.setItem('scout_leader_session', JSON.stringify(currentUser));
+                
+                alert('تم حفظ التعديلات بنجاح! ✓');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات';
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

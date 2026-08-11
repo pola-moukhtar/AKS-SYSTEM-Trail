@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="icon" type="image/png" href="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مقارنة القطاعات - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { background: var(--dark); color: var(--silver); font-family: 'Cairo', 'Segoe UI', sans-serif; }
+        .stat-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .chart-container { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="p-4 bg-[linear-gradient(135deg,var(--dark)_0%,var(--dark2)_100%)] border-b border-[var(--border)] flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+            <button onclick="window.location.href='home.html'" class="text-xl text-gray-500 hover:text-[var(--gold)] transition" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+            <h1 class="text-lg font-bold text-white">مقارنة القطاعات</h1>
+        </div>
+        <p class="text-xs text-gray-500">نسبة الحضور العامة لكل قطاع</p>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-6 px-4 mb-10">
+        <!-- إحصائيات سريعة -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm text-gray-400">براعم</h3>
+                    <i class="fa-solid fa-seedling text-[var(--gold)]"></i>
+                </div>
+                <p class="text-2xl font-bold text-white" id="stat-براعم">—</p>
+                <p class="text-xs text-gray-500 mt-1">نسبة الحضور</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm text-gray-400">ابتدائي</h3>
+                    <i class="fa-solid fa-child text-[var(--gold)]"></i>
+                </div>
+                <p class="text-2xl font-bold text-white" id="stat-ابتدائي">—</p>
+                <p class="text-xs text-gray-500 mt-1">نسبة الحضور</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm text-gray-400">اعدادي</h3>
+                    <i class="fa-solid fa-user-graduate text-[var(--gold)]"></i>
+                </div>
+                <p class="text-2xl font-bold text-white" id="stat-اعدادي">—</p>
+                <p class="text-xs text-gray-500 mt-1">نسبة الحضور</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm text-gray-400">ثانوي</h3>
+                    <i class="fa-solid fa-graduation-cap text-[var(--gold)]"></i>
+                </div>
+                <p class="text-2xl font-bold text-white" id="stat-ثانوي">—</p>
+                <p class="text-xs text-gray-500 mt-1">نسبة الحضور</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm text-gray-400">مرشح جوالة</h3>
+                    <i class="fa-solid fa-hiking text-[var(--gold)]"></i>
+                </div>
+                <p class="text-2xl font-bold text-white" id="stat-مرشح جوالة">—</p>
+                <p class="text-xs text-gray-500 mt-1">نسبة الحضور</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm text-gray-400">عشيرة الجوالة</h3>
+                    <i class="fa-solid fa-users text-[var(--gold)]"></i>
+                </div>
+                <p class="text-2xl font-bold text-white" id="stat-عشيرة جوالة">—</p>
+                <p class="text-xs text-gray-500 mt-1">نسبة الحضور</p>
+            </div>
+        </div>
+
+        <!-- جدول التفاصيل -->
+        <div class="chart-container">
+            <h2 class="text-lg font-bold text-white mb-4">تفاصيل القطاعات</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right">
+                    <thead>
+                        <tr class="border-b border-[var(--border)]">
+                            <th class="p-3 text-[var(--gold)] text-sm">القطاع</th>
+                            <th class="p-3 text-[var(--gold)] text-sm text-center">عدد الكشافين</th>
+                            <th class="p-3 text-[var(--gold)] text-sm text-center">إجمالي الجلسات</th>
+                            <th class="p-3 text-[var(--gold)] text-sm text-center">الحضور</th>
+                            <th class="p-3 text-[var(--gold)] text-sm text-center">نسبة الحضور</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailsTableBody">
+                        <tr><td colspan="5" class="p-8 text-center text-gray-500">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('scout_leader_session') || 'null');
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+
+        async function loadBenchmarkData() {
+            try {
+                // جلب كل الكشافين المقبولين
+                const { data: scouts, error: scoutsError } = await supabaseClient
+                    .from('scouts')
+                    .select('scout_id, school_stage')
+                    .eq('status', 'مقبول');
+
+                if (scoutsError) throw scoutsError;
+
+                // جلب كل سجلات الحضور
+                const { data: attendance, error: attendanceError } = await supabaseClient
+                    .from('attendance')
+                    .select('scout_id, status');
+
+                if (attendanceError) throw attendanceError;
+
+                // تجميع البيانات حسب القطاع
+                const sectors = ['براعم', 'ابتدائي', 'اعدادي', 'ثانوي', 'مرشح جوالة', 'عشيرة جوالة'];
+                const sectorData = {};
+
+                sectors.forEach(sector => {
+                    const sectorScouts = scouts.filter(s => s.school_stage === sector);
+                    const scoutIds = sectorScouts.map(s => s.scout_id);
+                    const sectorAttendance = attendance.filter(a => scoutIds.includes(a.scout_id));
+                    const presentCount = sectorAttendance.filter(a => a.status === 'حاضر').length;
+                    const totalSessions = sectorAttendance.length;
+                    const percentage = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
+
+                    sectorData[sector] = {
+                        scoutCount: sectorScouts.length,
+                        totalSessions: totalSessions,
+                        presentCount: presentCount,
+                        percentage: percentage
+                    };
+                });
+
+                // تحديث الإحصائيات السريعة
+                sectors.forEach(sector => {
+                    const statEl = document.getElementById(`stat-${sector}`);
+                    if (statEl) {
+                        const percentage = sectorData[sector].percentage;
+                        statEl.textContent = `${percentage}%`;
+                        statEl.className = `text-2xl font-bold ${
+                            percentage >= 80 ? 'text-green-400' : 
+                            percentage >= 50 ? 'text-yellow-400' : 
+                            'text-red-400'
+                        }`;
+                    }
+                });
+
+                // ملء جدول التفاصيل
+                fillDetailsTable(sectorData);
+
+            } catch (err) {
+                console.error('Error loading benchmark data:', err);
+                alert('فشل تحميل البيانات: ' + err.message);
+            }
+        }
+
+        function fillDetailsTable(sectorData) {
+            const tbody = document.getElementById('detailsTableBody');
+            tbody.innerHTML = '';
+
+            const sectors = ['براعم', 'ابتدائي', 'اعدادي', 'ثانوي', 'مرشح جوالة', 'عشيرة جوالة'];
+            
+            sectors.forEach(sector => {
+                const data = sectorData[sector];
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-[rgba(201,168,76,0.08)] hover:bg-[rgba(201,168,76,0.05)]';
+                
+                const percentageColor = data.percentage >= 80 ? 'text-green-400' : 
+                                       data.percentage >= 50 ? 'text-yellow-400' : 
+                                       'text-red-400';
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-white font-bold">${sector}</td>
+                    <td class="p-3 text-center text-gray-300">${data.scoutCount}</td>
+                    <td class="p-3 text-center text-gray-300">${data.totalSessions}</td>
+                    <td class="p-3 text-center text-gray-300">${data.presentCount}</td>
+                    <td class="p-3 text-center font-bold ${percentageColor}">${data.percentage}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // تحميل البيانات عند فتح الصفحة
+        loadBenchmarkData();
+    </script>
+</body>
+</html>

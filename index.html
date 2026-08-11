@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - Ava Kirolos Scout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: var(--silver); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 50px rgba(0,0,0,0.9); width: 100%; max-width: 420px; overflow: hidden; }
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #a8832a 100%); color: #0d0d0d; font-weight: 700; transition: all 0.2s; }
+        .btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-gold:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .form-input { width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; border: 1px solid rgba(201,168,76,0.2); border-radius: 8px; background: var(--dark3); color: #fff; outline: none; transition: border-color 0.2s; }
+        .form-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.15); }
+        .form-input option { background: var(--dark3); }
+        .input-icon { position: absolute; right: 12px; top: 38px; color: var(--gold); font-size: 0.9rem; }
+        .eye-icon-btn { position: absolute; left: 12px; top: 38px; color: gray; background: none; border: none; cursor: pointer; transition: color 0.2s; }
+        .eye-icon-btn:hover { color: var(--gold); }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="text-center p-8 border-b border-[rgba(201,168,76,0.15)] bg-[linear-gradient(135deg,var(--dark3),var(--dark2))]">
+            <img src="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png" alt="Logo" class="w-20 h-20 mx-auto rounded-full object-contain mb-4" style="border: 2px solid var(--gold); box-shadow: 0 0 20px rgba(201,168,76,0.3);">
+            <h1 class="text-xl font-bold text-white tracking-wide">مجموعة آفا كيرلس الكشفية</h1>
+            <p class="text-xs text-gray-500 mt-1">نظام إدارة الكشافة الموحد</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" class="p-6 md:p-8 space-y-5">
+            <div class="relative">
+                <label class="block text-xs font-bold text-gray-400 mb-2">اسم المستخدم</label>
+                <input type="text" id="username" class="form-input" placeholder="اكتب اسم المستخدم" required>
+                <i class="fa-solid fa-user input-icon"></i>
+            </div>
+            <div class="relative">
+                <label class="block text-xs font-bold text-gray-400 mb-2">كلمة المرور</label>
+                <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                <i class="fa-solid fa-lock input-icon"></i>
+                <button type="button" class="eye-icon-btn" onclick="togglePassword('password','loginEye')"><i id="loginEye" class="fa-regular fa-eye-slash"></i></button>
+            </div>
+            <div class="pt-2">
+                <button type="submit" id="loginBtn" class="btn-gold w-full py-3 rounded-lg flex items-center justify-center gap-2 text-base">
+                    <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول
+                </button>
+            </div>
+            <div class="text-center pt-4 border-t border-[rgba(201,168,76,0.15)]">
+                <p class="text-sm text-gray-400">قائد جديد؟ <button type="button" onclick="openSignupModal()" class="text-[var(--gold)] font-bold hover:underline">سجل حسابك من هنا</button></p>
+            </div>
+        </form>
+    </div>
+
+    <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-[var(--dark2)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeSignupModal()" class="absolute top-4 left-4 text-gray-500 hover:text-red-400 text-xl"><i class="fa-solid fa-circle-xmark"></i></button>
+            <h2 class="text-xl font-bold text-white mb-1">إنشاء حساب قائد</h2>
+            <p class="text-xs text-gray-400 mb-5">الحساب هيحتاج موافقة الماستر أو القائد العام قبل التفعيل</p>
+
+            <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-4">
+                <div>
+                    <label class="form-label">الاسم بالكامل *</label>
+                    <input type="text" id="regName" class="form-input" style="padding-right:1rem" required>
+                    <div id="regNameError" class="hidden text-xs text-red-300 mt-1"></div>
+                </div>
+                <div>
+                    <label class="form-label">رقم الموبايل *</label>
+                    <input type="text" id="regPhone" class="form-input" style="padding-right:1rem" required dir="ltr">
+                </div>
+                <div>
+                    <label class="form-label">اسم المستخدم (Username) *</label>
+                    <input type="text" id="regUser" class="form-input" style="padding-right:1rem" required>
+                    <div id="regUserError" class="hidden text-xs text-red-300 mt-1"></div>
+                </div>
+                <div class="relative">
+                    <label class="form-label">كلمة المرور *</label>
+                    <input type="password" id="regPass" class="form-input" required>
+                    <button type="button" class="eye-icon-btn" style="top:28px" onclick="togglePassword('regPass','regEye')"><i id="regEye" class="fa-regular fa-eye-slash"></i></button>
+                </div>
+
+                <div>
+                    <label class="form-label">الرتبة المطلوبة *</label>
+                    <select id="regRole" class="form-input" style="padding-right:1rem" onchange="toggleRoleFields()">
+                        <option value="TroopLeader">قائد فرقة</option>
+                        <option value="SectorLeader">قائد قطاع</option>
+                        <option value="Viewer">عشيرة</option>
+                    </select>
+                </div>
+
+                <div id="troopField">
+                    <label class="form-label">الفرقة</label>
+                    <select id="regTroop" class="form-input" style="padding-right:1rem">
+                        <option value="براعم">براعم</option>
+                        <option value="أشبال وزهرات">أشبال وزهرات</option>
+                        <option value="مبتدئ ومرشدات">مبتدئ ومرشدات</option>
+                        <option value="متقدم ورائدات">متقدم ورائدات</option>
+                        <option value="مرشح جوالة">مرشح جوالة</option>
+                        <option value="عشيرة الجوالة">عشيرة الجوالة</option>
+                    </select>
+                </div>
+
+                <div id="sectorField" class="hidden">
+                    <label class="form-label">القطاع</label>
+                    <select id="regSector" class="form-input" style="padding-right:1rem">
+                        <option value="براعم">براعم</option>
+                        <option value="ابتدائي">أشبال وزهرات</option>
+                        <option value="اعدادي">مبتدئ ومرشدات</option>
+                        <option value="ثانوي">متقدم ورائدات</option>
+                        <option value="مرشح جوالة">مرشح جوالة</option>
+                        <option value="عشيرة جوالة">عشيرة الجوالة</option>
+                    </select>
+                </div>
+
+                <div class="border-t border-[rgba(201,168,76,0.15)] pt-4 mt-4">
+                    <label class="form-label">الحالة الوظيفية/الدراسية *</label>
+                    <select id="regEmploymentStatus" class="form-input" style="padding-right:1rem" onchange="toggleEmploymentFields()">
+                        <option value="بيدرس">بيدرس</option>
+                        <option value="شغال">شغال</option>
+                        <option value="لا يعمل">لا يعمل</option>
+                    </select>
+                </div>
+
+                <div id="studyFields">
+                    <div>
+                        <label class="form-label">المرحلة الدراسية</label>
+                        <select id="regEducationLevel" class="form-input" style="padding-right:1rem">
+                            <option value="">-- اختر --</option>
+                            <option value="جامعة">جامعة</option>
+                            <option value="دراسات عليا">دراسات عليا</option>
+                            <option value="ثانوي">ثانوي</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">الجامعة</label>
+                        <input type="text" id="regUniversity" class="form-input" style="padding-right:1rem" placeholder="مثال: جامعة القاهرة">
+                    </div>
+                    <div>
+                        <label class="form-label">الكلية</label>
+                        <input type="text" id="regFaculty" class="form-input" style="padding-right:1rem" placeholder="مثال: هندسة">
+                    </div>
+                    <div>
+                        <label class="form-label">السنة الدراسية</label>
+                        <input type="text" id="regAcademicYear" class="form-input" style="padding-right:1rem" placeholder="مثال: السنة الثانية">
+                    </div>
+                </div>
+
+                <div id="workFields" class="hidden">
+                    <div>
+                        <label class="form-label">المسمى الوظيفي</label>
+                        <input type="text" id="regJobTitle" class="form-input" style="padding-right:1rem" placeholder="مثال: مهندس برمجيات">
+                    </div>
+                    <div>
+                        <label class="form-label">مكان العمل</label>
+                        <input type="text" id="regWorkplace" class="form-input" style="padding-right:1rem" placeholder="مثال: شركة XYZ">
+                    </div>
+                    <div>
+                        <label class="form-label">المؤهل الدراسي</label>
+                        <input type="text" id="regEducationLevelWork" class="form-input" style="padding-right:1rem" placeholder="مثال: بكالوريوس هندسة">
+                    </div>
+                </div>
+
+                <div id="unemployedFields" class="hidden">
+                    <div>
+                        <label class="form-label">المؤهل الدراسي (خريج إيه؟)</label>
+                        <input type="text" id="regUnemployedEducation" class="form-input" style="padding-right:1rem" placeholder="مثال: بكالوريوس تجارة">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">الخبرة الكشفية السابقة</label>
+                    <textarea id="regScoutingExperience" class="form-input" style="padding-right:1rem; resize:vertical" rows="3" placeholder="مثال: خدمت في براعم لمدة سنتين، حاصل على شارة كذا..."></textarea>
+                </div>
+
+                <button type="submit" id="signupBtn" class="btn-gold w-full py-2.5 rounded-lg mt-2">تسجيل الحساب</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        if (localStorage.getItem('scout_leader_session')) window.location.href = 'home.html';
+
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye-slash','fa-eye'); }
+            else { input.type = 'password'; icon.classList.replace('fa-eye','fa-eye-slash'); }
+        }
+
+        function toggleRoleFields() {
+            const role = document.getElementById('regRole').value;
+            document.getElementById('troopField').classList.toggle('hidden', role !== 'TroopLeader');
+            document.getElementById('sectorField').classList.toggle('hidden', role !== 'SectorLeader');
+        }
+
+        function toggleEmploymentFields() {
+            const status = document.getElementById('regEmploymentStatus').value;
+            document.getElementById('studyFields').classList.toggle('hidden', status !== 'بيدرس');
+            document.getElementById('workFields').classList.toggle('hidden', status !== 'شغال');
+            document.getElementById('unemployedFields').classList.toggle('hidden', status !== 'لا يعمل');
+        }
+
+        function validateArabicFullName(fullName) {
+            const trimmed = String(fullName || '').trim();
+            if (!trimmed) return { ok: false, message: 'الاسم الكامل مطلوب.' };
+            const words = trimmed.split(/\s+/).filter(Boolean);
+            if (words.length < 3) {
+                return { ok: false, message: 'الاسم الكامل لازم يكون 3 كلمات على الأقل بالعربي.' };
+            }
+            const arabicRegex = /^[\u0600-\u06FF\s]+$/;
+            if (!arabicRegex.test(trimmed)) {
+                return { ok: false, message: 'الاسم الكامل لازم يكون بالعربي فقط.' };
+            }
+            return { ok: true, message: '' };
+        }
+
+
+        async function usernameExists(username, ignoreId = null) {
+            const normalizedUsername = String(username || '').trim();
+            if (!normalizedUsername) return false;
+
+            const { data, error } = await supabaseClient
+                .from('leaders')
+                .select('id, username')
+                .eq('username', normalizedUsername);
+
+            if (error) {
+                console.error('Username lookup failed:', error);
+                throw error;
+            }
+
+            if (!data || data.length === 0) return false;
+            if (ignoreId) {
+                return data.some(row => String(row.id) !== String(ignoreId));
+            }
+            return true;
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true; btn.innerHTML = 'جاري التحقق...';
+
+            const { data, error } = await supabaseClient.from('leaders').select('*')
+                .eq('username', document.getElementById('username').value.trim())
+                .eq('password', document.getElementById('password').value.trim())
+                .single();
+
+            if (error || !data) {
+                alert('اسم المستخدم أو كلمة المرور غلط.');
+            } else if (data.status === 'قيد الانتظار') {
+                alert('حسابك لسه متفعلش يا قائد! استنى موافقة الماستر أو القائد العام.');
+            } else {
+                const normTroop = { 'أشبال': 'أشبال وزهرات', 'زهرات': 'أشبال وزهرات', 'كشاف مبتدئ': 'مبتدئ ومرشدات', 'مرشدات': 'مبتدئ ومرشدات', 'كشاف متقدم': 'متقدم ورائدات', 'رائدات': 'متقدم ورائدات' };
+                const toDbStage = { 'براعم': 'براعم', 'أشبال وزهرات': 'ابتدائي', 'مبتدئ ومرشدات': 'اعدادي', 'متقدم ورائدات': 'ثانوي', 'ابتدائي': 'ابتدائي', 'اعدادي': 'اعدادي', 'ثانوي': 'ثانوي' };
+                let troop = data.troop;
+                let sector = data.sector;
+                if (data.role === 'TroopLeader' && troop) troop = normTroop[troop.trim()] || troop;
+                if (data.role === 'SectorLeader' && sector) {
+                    const unified = normTroop[sector.trim()] || sector.trim();
+                    sector = toDbStage[unified] || toDbStage[sector.trim()] || sector;
+                }
+                localStorage.setItem('scout_leader_session', JSON.stringify({
+                    id: data.id,
+                    full_name: data.full_name,
+                    username: data.username,
+                    role: data.role,
+                    troop: troop,
+                    sector: sector
+                }));
+                window.location.href = 'home.html';
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول';
+        }
+
+        function openSignupModal() { document.getElementById('signupModal').classList.remove('hidden'); }
+        function closeSignupModal() { document.getElementById('signupModal').classList.add('hidden'); }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            const btn = document.getElementById('signupBtn');
+            btn.disabled = true; btn.textContent = 'جاري التسجيل...';
+
+            const requestedRole = document.getElementById('regRole').value;
+            const fullName = document.getElementById('regName').value.trim();
+            const username = document.getElementById('regUser').value.trim();
+            
+            const regNameError = document.getElementById('regNameError');
+            const regUserError = document.getElementById('regUserError');
+            regNameError.classList.add('hidden'); regUserError.classList.add('hidden');
+            
+            const fullNameValidation = validateArabicFullName(fullName);
+            if (!fullNameValidation.ok) {
+                regNameError.textContent = fullNameValidation.message;
+                regNameError.classList.remove('hidden');
+                alert(fullNameValidation.message);
+                btn.disabled = false; btn.textContent = 'تسجيل الحساب';
+                return;
+            }
+
+            if (!username) {
+                regUserError.textContent = 'اسم المستخدم مطلوب.';
+                regUserError.classList.remove('hidden');
+                alert('اسم المستخدم مطلوب.');
+                btn.disabled = false; btn.textContent = 'تسجيل الحساب';
+                return;
+            }
+
+            const duplicate = await usernameExists(username);
+            if (duplicate) {
+                regUserError.textContent = 'اسم المستخدم ده محجوز، اختار اسم مستخدم مختلف.';
+                regUserError.classList.remove('hidden');
+                alert('اسم المستخدم ده محجوز، اختار اسم مستخدم مختلف.');
+                btn.disabled = false; btn.textContent = 'تسجيل الحساب';
+                return;
+            }
+
+            const troop = requestedRole === 'TroopLeader' ? document.getElementById('regTroop').value : 'غير محدد';
+            const sector = requestedRole === 'SectorLeader' ? document.getElementById('regSector').value : null;
+            const employmentStatus = document.getElementById('regEmploymentStatus').value;
+
+            const leaderData = {
+                full_name: fullName,
+                phone: document.getElementById('regPhone').value.trim(),
+                username: username,
+                password: document.getElementById('regPass').value.trim(),
+                role: requestedRole,        
+                troop: troop,
+                sector: sector,
+                status: 'قيد الانتظار',
+                employment_status: employmentStatus,
+                scouting_experience: document.getElementById('regScoutingExperience').value.trim() || null
+            };
+
+            // إضافة حقول الدراسة أو العمل حسب الحالة
+            if (employmentStatus === 'بيدرس') {
+                leaderData.education_level = document.getElementById('regEducationLevel').value || null;
+                leaderData.university = document.getElementById('regUniversity').value.trim() || null;
+                leaderData.faculty = document.getElementById('regFaculty').value.trim() || null;
+                leaderData.academic_year = document.getElementById('regAcademicYear').value.trim() || null;
+            } else if (employmentStatus === 'شغال') {
+                leaderData.job_title = document.getElementById('regJobTitle').value.trim() || null;
+                leaderData.workplace = document.getElementById('regWorkplace').value.trim() || null;
+                leaderData.education_level = document.getElementById('regEducationLevelWork').value.trim() || null;
+            } else if (employmentStatus === 'لا يعمل') {
+                leaderData.education_level = document.getElementById('regUnemployedEducation').value.trim() || null;
+            }
+
+            const { error } = await supabaseClient.from('leaders').insert([leaderData]);
+
+            if (error) {
+                alert(error.code === '23505' ? 'اسم المستخدم ده حد واخده، جرب واحد تاني!' : 'خطأ: ' + error.message);
+            } else {
+                alert('تم تسجيل حسابك بنجاح!\n\nكلم الماستر أو القائد العام عشان يفعلهولك ويحدد رتبتك.');
+                closeSignupModal();
+                document.getElementById('signupForm').reset();
+                toggleRoleFields();
+                toggleEmploymentFields();
+            }
+
+            btn.disabled = false; btn.textContent = 'تسجيل الحساب';
+        }
+    </script>
+</body>
+</html>

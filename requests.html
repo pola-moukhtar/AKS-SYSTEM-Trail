@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="icon" type="image/png" href="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلبات الكشافين - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); --green: #2e7d32; --red: #c62828; }
+        body { background: var(--dark); color: var(--silver); font-family: 'Segoe UI', sans-serif; }
+        .table-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        thead tr { background: var(--dark3); border-bottom: 1px solid var(--border); color: var(--gold); }
+        tbody tr { border-bottom: 1px solid rgba(201,168,76,0.08); transition: background 0.15s; }
+        tbody tr:hover { background: rgba(201,168,76,0.05); }
+        .btn-action { padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; color: white; transition: 0.2s; border: none; cursor: pointer; }
+        .btn-accept { background: var(--green); }
+        .btn-reject { background: var(--red); }
+        .btn-action:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .tab-btn { padding: 10px 18px; font-size: 0.85rem; font-weight: bold; color: #888; border-bottom: 3px solid transparent; cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; }
+        .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+        .type-badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
+        .type-add { background: rgba(60,179,113,0.15); color: #3cb371; }
+        .type-edit { background: rgba(201,168,76,0.15); color: var(--gold); }
+        .type-delete { background: rgba(198,40,40,0.15); color: #ef5350; }
+        .comparison-row { background: var(--dark3) !important; }
+        .comparison-row:hover { background: var(--dark3) !important; }
+    </style>
+</head>
+<body>
+    <nav class="p-4 bg-[linear-gradient(135deg,var(--dark)_0%,var(--dark2)_100%)] border-b border-[var(--border)] flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+            <button onclick="window.location.href='home.html'" class="text-xl text-gray-500 hover:text-[var(--gold)] transition" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+            <h1 class="text-lg font-bold text-white">طلبات الكشافين (<span id="requestsBadge">0</span>)</h1>
+        </div>
+        <p class="text-xs text-gray-500" id="accessNote">جاري التحميل...</p>
+    </nav>
+
+    <div class="max-w-6xl mx-auto mt-6 px-4 mb-10">
+        <div class="flex gap-2 mb-4 border-b border-[var(--border)]">
+            <button class="tab-btn active" id="tabAdd" onclick="switchTab('add')">إضافة (<span id="addCount">0</span>)</button>
+            <button class="tab-btn" id="tabChanges" onclick="switchTab('changes')">تعديل / حذف (<span id="changesCount">0</span>)</button>
+        </div>
+
+        <div class="table-card overflow-x-auto" id="addPanel">
+            <table class="w-full text-right whitespace-nowrap">
+                <thead>
+                    <tr>
+                        <th class="p-4">الصورة</th>
+                        <th class="p-4">الكود</th>
+                        <th class="p-4">الاسم</th>
+                        <th class="p-4">المرحلة</th>
+                        <th class="p-4">الموبايل</th>
+                        <th class="p-4 text-center">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="addTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="table-card overflow-x-auto hidden" id="changesPanel">
+            <table class="w-full text-right whitespace-nowrap">
+                <thead>
+                    <tr>
+                        <th class="p-4">الصورة</th>
+                        <th class="p-4">النوع</th>
+                        <th class="p-4">الكود</th>
+                        <th class="p-4">الاسم</th>
+                        <th class="p-4">طلب من</th>
+                        <th class="p-4">المرحلة</th>
+                        <th class="p-4 text-center">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="changesTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('scout_leader_session') || 'null');
+        if (!currentUser || !['Master', 'General', 'SectorLeader'].includes(currentUser.role)) {
+            window.location.href = 'home.html';
+        }
+
+        document.getElementById('accessNote').textContent =
+            currentUser.role === 'SectorLeader' ? `قطاع: ${currentUser.sector}` : 'كل القطاعات';
+
+        const sectorStageMap = {
+            'براعم': 'براعم',
+            'ابتدائي': 'ابتدائي',
+            'اعدادي': 'اعدادي',
+            'ثانوي': 'ثانوي',
+            'مرشح جوالة': 'مرشح جوالة'
+        };
+
+        function normalizeSectorName(sector) {
+            const raw = (sector || '').trim();
+            if (raw.startsWith('قطاع ')) return raw.replace('قطاع ', '').trim();
+            return raw;
+        }
+
+        function getDbSchoolStage(sector) {
+            const key = normalizeSectorName(sector);
+            return sectorStageMap[key] || null;
+        }
+
+        function getSectorStage() {
+            return getDbSchoolStage(normalizeSectorName(currentUser.sector)) || currentUser.sector;
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tabAdd').classList.toggle('active', tab === 'add');
+            document.getElementById('tabChanges').classList.toggle('active', tab === 'changes');
+            document.getElementById('addPanel').classList.toggle('hidden', tab !== 'add');
+            document.getElementById('changesPanel').classList.toggle('hidden', tab !== 'changes');
+        }
+
+        function updateTotalBadge(addN, changesN) {
+            document.getElementById('addCount').textContent = addN;
+            document.getElementById('changesCount').textContent = changesN;
+            document.getElementById('requestsBadge').textContent = addN + changesN;
+        }
+
+        async function loadAddRequests() {
+            const tbody = document.getElementById('addTableBody');
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">جاري التحميل...</td></tr>`;
+
+            let query = supabaseClient.from('scouts').select('*').eq('status', 'قيد الانتظار').order('created_at');
+            if (currentUser.role === 'SectorLeader') {
+                const stage = getSectorStage();
+                if (stage) query = query.eq('school_stage', stage);
+            }
+
+            const { data, error } = await query;
+            tbody.innerHTML = '';
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">${error.message}</td></tr>`;
+                return 0;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">مفيش طلبات إضافة</td></tr>`;
+                return 0;
+            }
+
+            // دالة لتحويل رابط Google Drive للصورة
+            function getDirectDriveLink(url) {
+                if (!url || url.trim() === '') return 'https://via.placeholder.com/150?text=No+Image';
+                const match = url.match(/(?:id=|d\/)([\w-]{25,33})/);
+                if (match && match[1]) {
+                    const driveLink = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+                    return `https://wsrv.nl/?url=${encodeURIComponent(driveLink)}&output=webp`;
+                }
+                return 'https://via.placeholder.com/150?text=No+Image';
+            }
+
+            data.forEach(scout => {
+                const imgSrc = getDirectDriveLink(scout.photo_url);
+                const tr = document.createElement('tr');
+                tr.id = `add-row-${scout.scout_id}`;
+                tr.innerHTML = `
+                    <td class="p-4"><img src="${imgSrc}" class="w-11 h-11 rounded-full object-cover border border-gray-600"></td>
+                    <td class="p-4 font-bold font-mono" style="color: var(--gold);">${scout.scout_id}</td>
+                    <td class="p-4 text-white font-medium">${scout.full_name}</td>
+                    <td class="p-4 text-gray-400">${scout.school_stage || '—'}</td>
+                    <td class="p-4 font-mono text-gray-300" dir="ltr">${scout.personal_phone || '—'}</td>
+                    <td class="p-4 text-center space-x-2 space-x-reverse">
+                        <button class="btn-action btn-accept" data-action="approve-add"><i class="fa-solid fa-check ml-1"></i> قبول</button>
+                        <button class="btn-action btn-reject" data-action="reject-add"><i class="fa-solid fa-xmark ml-1"></i> رفض</button>
+                    </td>
+                `;
+                tr.querySelector('[data-action="approve-add"]').onclick = () => approveAddScout(scout.scout_id);
+                tr.querySelector('[data-action="reject-add"]').onclick = () => rejectAddScout(scout.scout_id);
+                tbody.appendChild(tr);
+            });
+            return data.length;
+        }
+
+        async function loadChangeRequests() {
+            const tbody = document.getElementById('changesTableBody');
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-500">جاري التحميل...</td></tr>`;
+
+            let query = supabaseClient.from('scout_requests').select('*').eq('status', 'pending').order('created_at');
+            if (currentUser.role === 'SectorLeader') {
+                const stage = getSectorStage();
+                if (stage) query = query.eq('school_stage', stage);
+            }
+
+            const { data, error } = await query;
+            tbody.innerHTML = '';
+
+            if (error) {
+                const hint = error.message.includes('scout_requests')
+                    ? `<br><span class="text-xs text-gray-500">شغّل SQL إنشاء جدول scout_requests من database_migration.sql</span>`
+                    : '';
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-400">${error.message}${hint}</td></tr>`;
+                return 0;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-500">مفيش طلبات تعديل أو حذف</td></tr>`;
+                return 0;
+            }
+
+            const scoutIds = [...new Set(data.map(r => r.scout_id))];
+            const { data: scoutsData } = await supabaseClient.from('scouts').select('*').in('scout_id', scoutIds);
+            const scoutMap = {};
+            (scoutsData || []).forEach(s => { scoutMap[s.scout_id] = s; });
+
+            // دالة لتحويل رابط Google Drive للصورة
+            function getDirectDriveLink(url) {
+                if (!url || url.trim() === '') return 'https://via.placeholder.com/150?text=No+Image';
+                const match = url.match(/(?:id=|d\/)([\w-]{25,33})/);
+                if (match && match[1]) {
+                    const driveLink = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+                    return `https://wsrv.nl/?url=${encodeURIComponent(driveLink)}&output=webp`;
+                }
+                return 'https://via.placeholder.com/150?text=No+Image';
+            }
+
+            for (const req of data) {
+                const typeLabel = req.type === 'edit' ? 'تعديل' : 'حذف';
+                const typeClass = req.type === 'edit' ? 'type-edit' : 'type-delete';
+                const currentScout = scoutMap[req.scout_id];
+                const displayName = currentScout?.full_name || req.scout_data?.full_name || req.scout_id;
+                const photoUrl = currentScout?.photo_url || '';
+                const imgSrc = getDirectDriveLink(photoUrl);
+
+                // لو تعديل، نعمل مقارنة بين القديم والجديد
+                let comparisonHtml = '';
+                if (req.type === 'edit' && currentScout && req.scout_data) {
+                    const newData = typeof req.scout_data === 'string' ? JSON.parse(req.scout_data) : req.scout_data;
+                    const changes = [];
+                    
+                    const fieldsToCompare = {
+                        'full_name': 'الاسم',
+                        'personal_phone': 'موبايل الكشاف',
+                        'father_phone': 'تليفون الأب',
+                        'mother_phone': 'تليفون الأم',
+                        'address': 'العنوان',
+                        'school_stage': 'المرحلة الدراسية',
+                        'school_year': 'السنة الدراسية',
+                        'confession_father': 'أب الاعتراف',
+                        'has_diseases': 'أمراض',
+                        'diseases_details': 'تفاصيل الصحة'
+                    };
+
+                    Object.keys(fieldsToCompare).forEach(key => {
+                        const oldVal = currentScout[key] || '—';
+                        const newVal = newData[key] || '—';
+                        if (oldVal !== newVal) {
+                            changes.push(`
+                                <div class="flex gap-2 items-start text-xs">
+                                    <span class="text-gray-500 min-w-[100px]">${fieldsToCompare[key]}:</span>
+                                    <span class="line-through text-red-400 flex-1">${oldVal}</span>
+                                    <i class="fa-solid fa-arrow-left text-[var(--gold)] text-[10px] mt-0.5"></i>
+                                    <span class="text-green-400 flex-1">${newVal}</span>
+                                </div>
+                            `);
+                        }
+                    });
+
+                    if (changes.length > 0) {
+                        comparisonHtml = `
+                            <tr>
+                                <td colspan="7" class="p-0">
+                                    <div class="p-4 bg-[var(--dark3)] border-t border-b border-[rgba(201,168,76,0.15)]">
+                                        <p class="text-xs font-bold text-[var(--gold)] mb-3 flex items-center gap-2">
+                                            <i class="fa-solid fa-code-compare"></i> التغييرات المطلوبة (${changes.length}):
+                                        </p>
+                                        <div class="space-y-2 max-h-60 overflow-y-auto">
+                                            ${changes.join('')}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                tr.id = `change-row-${req.id}`;
+                tr.innerHTML = `
+                    <td class="p-4"><img src="${imgSrc}" class="w-11 h-11 rounded-full object-cover border border-gray-600"></td>
+                    <td class="p-4"><span class="type-badge ${typeClass}">${typeLabel}</span></td>
+                    <td class="p-4 font-bold font-mono" style="color: var(--gold);">${req.scout_id}</td>
+                    <td class="p-4 text-white font-medium">${displayName}</td>
+                    <td class="p-4 text-gray-400">${req.requested_by || '—'}</td>
+                    <td class="p-4 text-gray-400">${req.school_stage || '—'}</td>
+                    <td class="p-4 text-center space-x-2 space-x-reverse">
+                        <button class="btn-action btn-accept" data-action="approve-change">موافقة</button>
+                        <button class="btn-action btn-reject" data-action="reject-change"><i class="fa-solid fa-xmark"></i></button>
+                    </td>
+                `;
+                tr.querySelector('[data-action="approve-change"]').onclick = () => approveChangeRequest(req);
+                tr.querySelector('[data-action="reject-change"]').onclick = () => rejectChangeRequest(req.id);
+                tbody.appendChild(tr);
+
+                // لو في تغييرات، نضيف صف المقارنة
+                if (comparisonHtml) {
+                    const comparisonRow = document.createElement('tr');
+                    comparisonRow.className = 'comparison-row';
+                    comparisonRow.innerHTML = comparisonHtml;
+                    tbody.appendChild(comparisonRow);
+                }
+            }
+            return data.length;
+        }
+
+        async function loadAllRequests() {
+            const [addN, changesN] = await Promise.all([loadAddRequests(), loadChangeRequests()]);
+            updateTotalBadge(addN, changesN);
+            if (changesN > 0 && addN === 0) switchTab('changes');
+        }
+
+        async function approveAddScout(scoutId) {
+            const { error } = await supabaseClient.from('scouts').update({ status: 'مقبول' }).eq('scout_id', scoutId);
+            if (error) return alert('خطأ: ' + error.message);
+            document.getElementById(`add-row-${scoutId}`)?.remove();
+            loadAllRequests();
+        }
+
+        async function rejectAddScout(scoutId) {
+            if (!confirm('متأكد إنك عايز ترفض ومسح الطلب ده؟')) return;
+            const { error } = await supabaseClient.from('scouts').delete().eq('scout_id', scoutId);
+            if (error) return alert('خطأ: ' + error.message);
+            document.getElementById(`add-row-${scoutId}`)?.remove();
+            loadAllRequests();
+        }
+
+        async function approveChangeRequest(req) {
+            try {
+                if (req.type === 'edit') {
+                    const payload = typeof req.scout_data === 'string' ? JSON.parse(req.scout_data) : req.scout_data;
+                    if (!payload) throw new Error('بيانات التعديل فارغة');
+                    const { error } = await supabaseClient.from('scouts').update(payload).eq('scout_id', req.scout_id);
+                    if (error) throw error;
+                } else if (req.type === 'delete') {
+                    const { error } = await supabaseClient.from('scouts').delete().eq('scout_id', req.scout_id);
+                    if (error) throw error;
+                }
+
+                const { error: statusError } = await supabaseClient
+                    .from('scout_requests')
+                    .update({ status: 'approved' })
+                    .eq('id', req.id);
+                if (statusError) throw statusError;
+
+                alert('تمت الموافقة وتنفيذ الطلب');
+                document.getElementById(`change-row-${req.id}`)?.remove();
+                loadAllRequests();
+            } catch (err) {
+                alert('فشل التنفيذ: ' + (err.message || err));
+            }
+        }
+
+        async function rejectChangeRequest(reqId) {
+            if (!confirm('متأكد من رفض الطلب؟')) return;
+            const { error } = await supabaseClient.from('scout_requests').update({ status: 'rejected' }).eq('id', reqId);
+            if (error) return alert('خطأ: ' + error.message);
+            document.getElementById(`change-row-${reqId}`)?.remove();
+            loadAllRequests();
+        }
+
+        loadAllRequests();
+    </script>
+</body>
+</html>

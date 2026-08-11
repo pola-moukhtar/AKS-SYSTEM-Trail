@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلبات الطلايع - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); --green: #2e7d32; --red: #c62828; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: var(--silver); min-height: 100vh; }
+        nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); }
+        .request-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 16px; overflow: hidden; }
+        .card-header { background: var(--dark3); padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .badge-type { font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: rgba(60,179,113,0.15); color: #3cb371; border: 1px solid rgba(60,179,113,0.35); }
+        .btn-accept { background: var(--green); color: white; border-radius: 8px; padding: 8px 18px; font-weight: 700; }
+        .btn-reject { background: var(--red); color: white; border-radius: 8px; padding: 8px 18px; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <nav class="p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+            <button onclick="window.location.href='home.html'" class="text-xl text-gray-500 hover:text-[var(--gold)] transition" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+            <div>
+                <h1 class="text-lg font-bold text-white">طلبات الطلايع المعلقة</h1>
+                <p class="text-xs text-gray-500" id="sectorLabel">جاري التحميل...</p>
+            </div>
+        </div>
+        <span class="text-xs font-bold px-3 py-1 rounded-full bg-[rgba(201,168,76,0.1)] text-[var(--gold)] border border-[rgba(201,168,76,0.3)]">
+            <span id="pendingCount">0</span> طلب
+        </span>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 py-8" id="requestsList"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('scout_leader_session') || 'null');
+        if (!currentUser || !['SectorLeader','General','Master'].includes(currentUser.role)) window.location.href = 'home.html';
+
+        document.getElementById('sectorLabel').textContent = currentUser.role === 'SectorLeader' ? `قطاع: ${currentUser.sector || 'غير محدد'}` : 'كل القطاعات';
+
+        const scoutCache = {};
+        function parseScoutIds(value) {
+            if (Array.isArray(value)) return value;
+            if (typeof value === 'string') {
+                try { return JSON.parse(value || '[]'); } catch { return []; }
+            }
+            return [];
+        }
+
+        function normalizeSectorName(sector) {
+            const raw = (sector || '').trim();
+            if (raw.startsWith('قطاع ')) return raw.replace('قطاع ', '').trim();
+            return raw;
+        }
+
+        function getAllowedTroopsForSector(sector) {
+            const key = normalizeSectorName(sector);
+            if (key === 'براعم') return ['براعم'];
+            if (key === 'ابتدائي') return ['أشبال وزهرات', 'أشبال', 'زهرات'];
+            if (key === 'اعدادي') return ['مبتدئ ومرشدات', 'كشاف مبتدئ', 'مرشدات'];
+            if (key === 'ثانوي') return ['متقدم ورائدات', 'كشاف متقدم', 'رائدات'];
+            return [];
+        }
+
+        async function getScoutNames(ids) {
+            const missing = ids.filter(id => !scoutCache[id]);
+            if (missing.length > 0) {
+                const { data } = await supabaseClient.from('scouts').select('scout_id, full_name').in('scout_id', missing);
+                if (data) data.forEach(s => scoutCache[s.scout_id] = s.full_name);
+            }
+            return ids.map(id => scoutCache[id] || id);
+        }
+
+        async function loadRequests() {
+            let query = supabaseClient.from('patrol_requests').select('*').eq('status', 'pending');
+
+            if (currentUser.role === 'SectorLeader' && currentUser.sector) {
+                const allowedTroops = getAllowedTroopsForSector(currentUser.sector);
+                if (allowedTroops.length > 0) query = query.in('troop', allowedTroops);
+            }
+
+            const { data, error } = await query;
+            const list = document.getElementById('requestsList');
+            list.innerHTML = '';
+
+            if (error) {
+                document.getElementById('pendingCount').textContent = '0';
+                list.innerHTML = `<div class="text-center py-20 text-red-400">مشكلة في تحميل الطلبات: ${error.message}</div>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                document.getElementById('pendingCount').textContent = '0';
+                list.innerHTML = `<div class="text-center py-20 text-gray-500">مفيش طلبات معلقة دلوقتي.</div>`;
+                return;
+            }
+
+            document.getElementById('pendingCount').textContent = data.length;
+
+            for (const req of data) {
+                const scoutIds = parseScoutIds(req.scout_ids);
+                const names = await getScoutNames(scoutIds);
+
+                // لو تعديل، نجيب البيانات القديمة للمقارنة
+                let comparisonHtml = '';
+                if (req.type === 'edit' && req.patrol_id) {
+                    const { data: oldPatrol } = await supabaseClient
+                        .from('patrols')
+                        .select('name, yell, troop')
+                        .eq('id', req.patrol_id)
+                        .single();
+                    
+                    if (oldPatrol) {
+                        const changes = [];
+                        if (oldPatrol.name !== req.patrol_name) {
+                            changes.push(`<div class="flex gap-2 items-center text-xs"><span class="text-gray-500">الاسم:</span><span class="line-through text-red-400">${oldPatrol.name}</span><i class="fa-solid fa-arrow-left text-[var(--gold)]"></i><span class="text-green-400">${req.patrol_name}</span></div>`);
+                        }
+                        if ((oldPatrol.yell || '') !== (req.patrol_yell || '')) {
+                            changes.push(`<div class="flex gap-2 items-center text-xs"><span class="text-gray-500">الصيحة:</span><span class="line-through text-red-400">${oldPatrol.yell || 'بدون صيحة'}</span><i class="fa-solid fa-arrow-left text-[var(--gold)]"></i><span class="text-green-400">${req.patrol_yell || 'بدون صيحة'}</span></div>`);
+                        }
+                        if (oldPatrol.troop !== req.troop) {
+                            changes.push(`<div class="flex gap-2 items-center text-xs"><span class="text-gray-500">الفرقة:</span><span class="line-through text-red-400">${oldPatrol.troop}</span><i class="fa-solid fa-arrow-left text-[var(--gold)]"></i><span class="text-green-400">${req.troop}</span></div>`);
+                        }
+                        
+                        if (changes.length > 0) {
+                            comparisonHtml = `<div class="mb-4 p-3 bg-[var(--dark3)] rounded-lg border border-[rgba(201,168,76,0.2)]"><p class="text-xs font-bold text-[var(--gold)] mb-2"><i class="fa-solid fa-code-compare ml-1"></i> التغييرات المطلوبة:</p><div class="space-y-2">${changes.join('')}</div></div>`;
+                        }
+                    }
+                }
+
+                const yellDisplay = req.patrol_yell ? `<p class="text-xs text-gray-400 italic mt-1"><i class="fa-solid fa-bullhorn ml-1"></i> ${req.patrol_yell}</p>` : '';
+
+                const card = document.createElement('div');
+                card.className = 'request-card';
+                card.id = `req-${req.id}`;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <p class="font-bold text-white">${req.patrol_name} <span class="text-xs text-[var(--gold)] ml-2">(${req.troop})</span></p>
+                            ${yellDisplay}
+                            <p class="text-xs text-gray-500 mt-1">بواسطة: ${req.requested_by}</p>
+                        </div>
+                        <span class="badge-type">${req.type === 'create' ? 'إنشاء جديد' : (req.type === 'delete' ? 'حذف طليعة' : 'تعديل')}</span>
+                    </div>
+                    <div class="p-5">
+                        ${comparisonHtml}
+                        <p class="text-xs text-[var(--gold)] mb-2">الكشافين المطلوبين (${names.length})</p>
+                        <div class="flex flex-wrap gap-2 text-sm text-gray-300 mb-4">${names.length ? names.join(' ، ') : '—'}</div>
+                        <div class="flex gap-3">
+                            <button type="button" class="btn-accept flex-1" data-action="approve">موافقة وتنفيذ</button>
+                            <button type="button" class="btn-reject px-5" data-action="reject"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                `;
+
+                card.querySelector('[data-action="approve"]').onclick = () => approveRequest(req.id);
+                card.querySelector('[data-action="reject"]').onclick = () => rejectRequest(req.id);
+                list.appendChild(card);
+            }
+        }
+
+        async function approveRequest(reqId) {
+            const card = document.getElementById(`req-${reqId}`);
+            const approveBtn = card?.querySelector('[data-action="approve"]');
+            if (approveBtn) {
+                approveBtn.disabled = true;
+                approveBtn.textContent = 'جاري التنفيذ...';
+            }
+
+            try {
+                const { data: req, error: fetchError } = await supabaseClient
+                    .from('patrol_requests')
+                    .select('*')
+                    .eq('id', reqId)
+                    .single();
+
+                if (fetchError || !req) throw new Error(fetchError?.message || 'تعذر قراءة الطلب');
+
+                const scoutIds = parseScoutIds(req.scout_ids);
+                let patrolId = req.patrol_id || null;
+
+                if (req.type === 'create') {
+                    const { data: patrolRows, error: insertError } = await supabaseClient
+                        .from('patrols')
+                        .insert([{
+                            name: req.patrol_name,
+                            yell: req.patrol_yell || null,
+                            troop: req.troop
+                        }])
+                        .select('id');
+
+                    if (insertError) throw insertError;
+                    if (!patrolRows?.length) throw new Error('لم يتم إنشاء الطليعة في قاعدة البيانات');
+                    patrolId = patrolRows[0].id;
+                } else if (req.type === 'edit') {
+                    if (!patrolId) throw new Error('طلب التعديل بدون رقم طليعة');
+
+                    const { error: updatePatrolError } = await supabaseClient
+                        .from('patrols')
+                        .update({
+                            name: req.patrol_name,
+                            yell: req.patrol_yell || null,
+                            troop: req.troop
+                        })
+                        .eq('id', patrolId);
+                    if (updatePatrolError) throw updatePatrolError;
+
+                    const { error: clearError } = await supabaseClient
+                        .from('scouts')
+                        .update({ patrol_id: null })
+                        .eq('patrol_id', patrolId);
+                    if (clearError) throw clearError;
+                } else if (req.type === 'delete') {
+                    if (!patrolId) throw new Error('طلب الحذف بدون رقم طليعة');
+
+                    const { error: attendanceClearError } = await supabaseClient
+                        .from('attendance')
+                        .delete()
+                        .eq('patrol_id', patrolId);
+                    if (attendanceClearError) throw attendanceClearError;
+                    
+                    const { error: clearError } = await supabaseClient
+                        .from('scouts')
+                        .update({ patrol_id: null })
+                        .eq('patrol_id', patrolId);
+                    if (clearError) throw clearError;
+
+                    const { error: delError } = await supabaseClient
+                        .from('patrols')
+                        .delete()
+                        .eq('id', patrolId);
+                    if (delError) throw delError;
+
+                    patrolId = null;
+                }
+
+                if (scoutIds.length > 0 && patrolId) {
+                    const { error: assignError } = await supabaseClient
+                        .from('scouts')
+                        .update({ patrol_id: patrolId })
+                        .in('scout_id', scoutIds);
+                    if (assignError) throw assignError;
+                }
+
+                const { error: statusError } = await supabaseClient
+                    .from('patrol_requests')
+                    .update({ status: 'approved' })
+                    .eq('id', reqId);
+                if (statusError) throw statusError;
+
+                alert('تمت الموافقة وتنفيذ الطلب بنجاح');
+                card?.remove();
+                loadRequests();
+            } catch (err) {
+                console.error('approveRequest failed:', err);
+                alert('فشل التنفيذ: ' + (err.message || err));
+                if (approveBtn) {
+                    approveBtn.disabled = false;
+                    approveBtn.textContent = 'موافقة وتنفيذ';
+                }
+            }
+        }
+
+        async function rejectRequest(reqId) {
+            if (!confirm('متأكد إنك عايز ترفض الطلب ده؟')) return;
+
+            const card = document.getElementById(`req-${reqId}`);
+            const rejectBtn = card?.querySelector('[data-action="reject"]');
+            if (rejectBtn) rejectBtn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('patrol_requests')
+                    .update({ status: 'rejected' })
+                    .eq('id', reqId);
+                if (error) throw error;
+
+                card?.remove();
+                loadRequests();
+            } catch (err) {
+                alert('فشل الرفض: ' + (err.message || err));
+                if (rejectBtn) rejectBtn.disabled = false;
+            }
+        }
+
+        loadRequests();
+    </script>
+</body>
+</html>

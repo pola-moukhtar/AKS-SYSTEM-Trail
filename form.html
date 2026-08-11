@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="icon" type="image/png" href="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة كشاف جديد - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --gold:    #c9a84c;
+            --gold-lt: #e8d5a3;
+            --silver:  #c0c0c0;
+            --dark:    #0d0d0d;
+            --dark2:   #1a1a1a;
+            --dark3:   #242424;
+            --dark4:   #2e2e2e;
+            --red:     #8b1a1a;
+            --border:  rgba(201,168,76,0.25);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: var(--silver);
+            padding: 20px;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--dark2); }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+        .form-container { background: var(--dark2); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 60px rgba(0,0,0,0.8); max-width: 900px; margin: 0 auto; overflow: hidden; }
+        .form-header { border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--dark3), var(--dark2)); padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #a8832a 100%); color: #0d0d0d; font-weight: 700; border: none; transition: all 0.2s; cursor: pointer; }
+        .btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-gold:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .form-input { width: 100%; padding: 0.6rem 0.85rem; border: 1px solid rgba(201,168,76,0.2); border-radius: 8px; font-size: 0.9rem; outline: none; background: var(--dark3); color: var(--silver); transition: border-color 0.15s; color-scheme: dark; }
+        .form-input::placeholder { color: #555; }
+        .form-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.15); }
+        .form-input option { background: var(--dark3); }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+
+        .section-heading { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .section-heading.gold  { background: rgba(201,168,76,0.1); color: var(--gold); border-right: 3px solid var(--gold); }
+        .section-heading.red   { background: rgba(139,26,26,0.15); color: #e57373; border-right: 3px solid #e57373; }
+        .gold-divider { height: 1px; background: linear-gradient(to left, transparent, var(--gold), transparent); margin: 24px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div class="form-header">
+            <button onclick="window.location.href='home.html'" class="text-2xl text-[var(--gold)] hover:text-white transition" title="الرئيسية" style="background: none; border: none; cursor: pointer; padding: 0;"><i class="fa-solid fa-house"></i></button>
+            <img src="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png"
+                 class="w-14 h-14 object-contain opacity-90 rounded-full" style="border: 2px solid var(--gold);">
+            <div>
+                <h1 class="text-xl font-bold" style="color: #fff;">إضافة كشاف جديد</h1>
+                <p class="text-sm mt-1" style="color: #888;">الكود المقترح: <span id="formScoutIdDisplay" class="font-bold tracking-wider" style="color: var(--gold);">بيحمل...</span></p>
+            </div>
+        </div>
+
+        <div class="p-6 md:p-8">
+            <form id="addScoutForm" onsubmit="submitScoutData(event); return false;">
+                <input type="hidden" id="formScoutId">
+
+                <div class="section-heading gold"><i class="fa-solid fa-circle-info"></i> البيانات الأساسية</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-6">
+                    <div><label class="form-label">الاسم الرباعي *</label><input id="formFullName" type="text" class="form-input" placeholder="الاسم الرباعي كامل"></div>
+                    <div><label class="form-label">تاريخ الميلاد</label><input id="formBirthDate" type="date" class="form-input"></div>
+                    <div>
+                        <label class="form-label">النوع</label>
+                        <select id="formGender" class="form-input">
+                            <option value="">-- اختار --</option>
+                            <option value="ولد">ولد</option>
+                            <option value="بنت">بنت</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">الفريق</label>
+                        <select id="formSchoolStage" class="form-input" onchange="updateSchoolYearAndCertificate()">
+                            <option value="">-- اختار --</option>
+                            <option value="براعم">براعم</option>
+                            <option value="ابتدائي">أشبال وزهرات</option>
+                            <option value="اعدادي">مبتدئ ومرشدات</option>
+                            <option value="ثانوي">متقدم ورائدات</option>
+                            <option value="مرشح جوالة">مرشح جوالة</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">السنة الدراسية</label>
+                        <select id="formSchoolYear" class="form-input">
+                            <option value="">-- اختار المرحلة الأول --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">المؤهل / الشهادة</label>
+                        <select id="formCertificate" class="form-input" onchange="handleCertificateChange()">
+                            <option value="">-- اختار المرحلة الأول --</option>
+                        </select>
+                    </div>
+                    <div id="certificateOtherContainer" style="display: none;">
+                        <label class="form-label">اكتب نوع الشهادة</label>
+                        <input id="formCertificateOther" type="text" class="form-input" placeholder="اكتب نوع الشهادة">
+                    </div>
+                    
+                    <!-- حقول مرشح جوالة -->
+                    <div id="gawalaFieldsContainer" style="display: none;" class="sm:col-span-2 md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-5 mt-4 p-4 border border-[var(--gold)] rounded-lg">
+                        <div class="sm:col-span-3">
+                            <p class="text-sm font-bold text-[var(--gold)] mb-2"><i class="fa-solid fa-graduation-cap ml-2"></i>بيانات الدراسة الجامعية</p>
+                        </div>
+                        <div>
+                            <label class="form-label">الجامعة</label>
+                            <input id="formGawalaUniversity" type="text" class="form-input" placeholder="مثال: جامعة القاهرة">
+                        </div>
+                        <div>
+                            <label class="form-label">الكلية</label>
+                            <input id="formGawalaFaculty" type="text" class="form-input" placeholder="مثال: هندسة">
+                        </div>
+                        <div>
+                            <label class="form-label">السنة الدراسية</label>
+                            <input id="formGawalaAcademicYear" type="text" class="form-input" placeholder="مثال: السنة الثانية">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gold-divider"></div>
+
+                <div class="section-heading gold"><i class="fa-solid fa-phone"></i> بيانات التواصل</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-6">
+                    <div><label class="form-label">موبايل الكشاف *</label><input id="formPersonalPhone" type="text" class="form-input" dir="ltr" placeholder="01xxxxxxxxx"></div>
+                    <div><label class="form-label">تليفون الأب</label><input id="formFatherPhone" type="text" class="form-input" dir="ltr" placeholder="01xxxxxxxxx"></div>
+                    <div><label class="form-label">تليفون الأم</label><input id="formMotherPhone" type="text" class="form-input" dir="ltr" placeholder="01xxxxxxxxx"></div>
+                    <div><label class="form-label">الإيميل الشخصي</label><input id="formPersonalEmail" type="email" class="form-input" dir="ltr" placeholder="example@gmail.com"></div>
+                    <div><label class="form-label">يوزر الفيسبوك</label><input id="formFacebook" type="text" class="form-input" placeholder="اسم الأكونت"></div>
+                    <div><label class="form-label">يوزر الإنستجرام</label><input id="formInstagram" type="text" class="form-input" placeholder="اسم الأكونت"></div>
+                    <div class="sm:col-span-2 md:col-span-3"><label class="form-label">العنوان بالكامل</label><input id="formAddress" type="text" class="form-input" placeholder="رقم الشارع، الشارع، المنطقة"></div>
+                </div>
+
+                <div class="gold-divider"></div>
+
+                <div class="section-heading gold"><i class="fa-solid fa-house-user"></i> بيانات الأسرة</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-6">
+                    <div><label class="form-label">شغل الأب</label><input id="formFatherJob" type="text" class="form-input" placeholder="وظيفة الأب"></div>
+                    <div><label class="form-label">شغل الأم</label><input id="formMotherJob" type="text" class="form-input" placeholder="وظيفة الأم"></div>
+                    <div><label class="form-label">عدد الإخوة</label><input id="formSiblingsCount" type="number" class="form-input" placeholder="مثال: 3"></div>
+                    <div><label class="form-label">ترتيبه بين إخواته</label><input id="formSiblingOrder" type="number" class="form-input" placeholder="مثال: 2"></div>
+                    <div><label class="form-label">أب الاعتراف</label><input id="formConfessionFather" type="text" class="form-input" placeholder="اسم أب الاعتراف"></div>
+                    <div><label class="form-label">كنيسة أب الاعتراف</label><input id="formConfessionChurch" type="text" class="form-input" placeholder="اسم الكنيسة"></div>
+                </div>
+
+                <div class="gold-divider"></div>
+
+                <div class="section-heading gold"><i class="fa-solid fa-campground"></i> بيانات كشفية</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-6">
+                    <div class="sm:col-span-2 md:col-span-1"><label class="form-label">الزي الكشفي المتوفر</label><input id="formUniform" type="text" class="form-input" placeholder="مثال: قميص، فولار"></div>
+                    <div class="sm:col-span-2 md:col-span-2"><label class="form-label">الهوايات والمهارات</label><input id="formHobbies" type="text" class="form-input" placeholder="مثال: رسم، كورة"></div>
+                </div>
+
+                <div class="gold-divider"></div>
+
+                <div class="section-heading red"><i class="fa-solid fa-heart-pulse"></i> الصحة</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+                    <div>
+                        <label class="form-label" style="color: #e57373;">عنده أمراض؟</label>
+                        <select id="formHasDiseases" class="form-input">
+                            <option value="لا">لا</option>
+                            <option value="نعم">نعم</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="color: #e57373;">تفاصيل الحالة الصحية</label>
+                        <input id="formDiseasesDetails" type="text" class="form-input" placeholder="لو في تفاصيل اكتبها هنا">
+                    </div>
+                </div>
+
+                <div class="gold-divider"></div>
+
+                <div class="section-heading gold"><i class="fa-solid fa-image"></i> الصورة</div>
+                <div class="mb-8">
+                    <label class="form-label">رابط الصورة من Google Drive</label>
+                    <input id="formPhotoUrl" type="text" class="form-input" dir="ltr" placeholder="https://drive.google.com/open?id=...">
+                </div>
+
+                <div class="flex justify-end pt-4" style="border-top: 1px solid var(--border);">
+                    <button type="submit" id="formSubmitBtn" class="btn-gold px-8 py-3 rounded-lg text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> حفظ الكشاف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchNextScoutId() {
+            const { data, error } = await supabaseClient.from('scouts').select('scout_id');
+            let nextId = 'A00001'; 
+            if (data && data.length > 0) {
+                const nums = data.map(s => {
+                    const match = s.scout_id?.match(/^A(\d+)$/i);
+                    return match ? parseInt(match[1], 10) : 0;
+                }).filter(n => !isNaN(n));
+                const maxNum = Math.max(...nums);
+                nextId = `A${String(maxNum + 1).padStart(5, '0')}`;
+            }
+            document.getElementById('formScoutId').value = nextId;
+            document.getElementById('formScoutIdDisplay').textContent = nextId;
+        }
+
+        function validateScoutData(data) {
+            let isValid = true;
+            let firstErrorElement = null;
+
+            function setError(inputId, message) {
+                isValid = false;
+                const inputEl = document.getElementById(inputId);
+                if (inputEl) {
+                    inputEl.classList.add('border-red-500', 'bg-red-50');
+                    let errorSpan = document.getElementById(inputId + '_error');
+                    if (!errorSpan) {
+                        errorSpan = document.createElement('span');
+                        errorSpan.id = inputId + '_error';
+                        errorSpan.className = 'text-red-500 text-xs mt-1 block font-bold';
+                        inputEl.parentNode.insertBefore(errorSpan, inputEl.nextSibling);
+                    }
+                    errorSpan.textContent = message;
+                    errorSpan.style.display = 'block';
+                    if (!firstErrorElement) firstErrorElement = inputEl;
+                }
+            }
+
+            document.querySelectorAll('.form-input').forEach(el => {
+                el.classList.remove('border-red-500', 'bg-red-50');
+                const errSpan = document.getElementById(el.id + '_error');
+                if (errSpan) errSpan.style.display = 'none';
+            });
+
+            const nameRegex = /^[\u0600-\u06FF\s]+$/;
+            const nameWords = data.full_name ? data.full_name.trim().split(/\s+/).filter(w => w.length > 0) : [];
+            if (!data.full_name) setError('formFullName', 'الاسم الرباعي مطلوب يا قائد.');
+            else if (!nameRegex.test(data.full_name)) setError('formFullName', 'الاسم لازم يتكتب بالعربي بس.');
+            else if (nameWords.length < 3) setError('formFullName', 'لازم تكتب الاسم ثلاثي أو رباعي على الأقل.');
+
+            const phoneRegex = /^01[0125]\d{8}$/;
+            if (!data.personal_phone) setError('formPersonalPhone', 'رقم موبايل الكشاف مطلوب.');
+            else if (!phoneRegex.test(data.personal_phone)) setError('formPersonalPhone', 'الرقم مش صحيح، لازم يكون 11 رقم بيبدأ بـ 01.');
+
+            if (data.father_phone && !phoneRegex.test(data.father_phone)) setError('formFatherPhone', 'رقم موبايل الأب مش صحيح.');
+            if (data.mother_phone && !phoneRegex.test(data.mother_phone)) setError('formMotherPhone', 'رقم موبايل الأم مش صحيح.');
+
+            if (data.personal_phone && data.father_phone && data.mother_phone) {
+                if (data.personal_phone === data.father_phone && data.personal_phone === data.mother_phone) {
+                    setError('formPersonalPhone', 'الرقم متكرر 3 مرات! سيب خانة فاضية لو مفيش.');
+                    setError('formFatherPhone', 'الرقم متكرر 3 مرات!');
+                    setError('formMotherPhone', 'الرقم متكرر 3 مرات!');
+                }
+            }
+
+            if (data.address && !/\d/.test(data.address)) setError('formAddress', 'العنوان لازم يكون فيه رقم العمارة أو الشقة.');
+
+            if (data.birth_date) {
+                const age = new Date().getFullYear() - new Date(data.birth_date).getFullYear();
+                if (age < 4 || age > 25) setError('formBirthDate', `السن غير منطقي (${age} سنة).`);
+            }
+
+            if (data.siblings_count && data.sibling_order) {
+                if (parseInt(data.sibling_order) > parseInt(data.siblings_count)) {
+                    setError('formSiblingOrder', 'الترتيب مينفعش يكون أكبر من العدد الكلي!');
+                }
+            }
+
+            if (!isValid && firstErrorElement) firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return isValid;
+        }
+
+        async function submitScoutData(event) {
+            event.preventDefault();
+
+            const sessionRaw = localStorage.getItem('scout_leader_session');
+            const currentUser = sessionRaw ? JSON.parse(sessionRaw) : null;
+            
+            // ✅ قائد القطاع (SectorLeader) له صلاحيات إدارية:
+            // - يضيف الكشافين مباشرة بدون موافقة (status = 'مقبول')
+            // - يوافق على الكشافين المضافين من قادة الفرق
+            const isAdmin = currentUser?.role === 'Master' || currentUser?.role === 'General' || currentUser?.role === 'SectorLeader';
+            const troopToDbStageMap = {
+                'براعم': 'براعم',
+                'أشبال وزهرات': 'ابتدائي',
+                'أشبال': 'ابتدائي',
+                'زهرات': 'ابتدائي',
+                'مبتدئ ومرشدات': 'اعدادي',
+                'كشاف مبتدئ': 'اعدادي',
+                'مرشدات': 'اعدادي',
+                'متقدم ورائدات': 'ثانوي',
+                'كشاف متقدم': 'ثانوي',
+                'رائدات': 'ثانوي'
+            };
+
+            let schoolStage = document.getElementById('formSchoolStage').value || null;
+            // TroopLeader لازم يضيف داخل فرقته فقط عشان الطلب يظهر لقائد القطاع الصحيح
+            if (currentUser?.role === 'TroopLeader') {
+                schoolStage = troopToDbStageMap[currentUser.troop] || schoolStage;
+            }
+
+            const scoutData = {
+                scout_id: document.getElementById('formScoutId').value.trim(),
+                full_name: document.getElementById('formFullName').value.trim(),
+                birth_date: document.getElementById('formBirthDate').value || null,
+                gender: document.getElementById('formGender').value || null,
+                personal_phone: document.getElementById('formPersonalPhone').value.trim(),
+                father_phone: document.getElementById('formFatherPhone').value.trim() || null,
+                mother_phone: document.getElementById('formMotherPhone').value.trim() || null,
+                address: document.getElementById('formAddress').value.trim() || null,
+                school_stage: schoolStage,
+                school_year: document.getElementById('formSchoolYear').value.trim() || null,
+                personal_email: document.getElementById('formPersonalEmail').value.trim() || null,
+                facebook_account: document.getElementById('formFacebook').value.trim() || null,
+                instagram_account: document.getElementById('formInstagram').value.trim() || null,
+                scout_uniform: document.getElementById('formUniform').value.trim() || null,
+                confession_father: document.getElementById('formConfessionFather').value.trim() || null,
+                confession_church: document.getElementById('formConfessionChurch').value.trim() || null,
+                father_job: document.getElementById('formFatherJob').value.trim() || null,
+                mother_job: document.getElementById('formMotherJob').value.trim() || null,
+                siblings_count: document.getElementById('formSiblingsCount').value.trim() ? parseInt(document.getElementById('formSiblingsCount').value.trim()) : null,
+                sibling_order: document.getElementById('formSiblingOrder').value.trim() ? parseInt(document.getElementById('formSiblingOrder').value.trim()) : null,
+                has_diseases: document.getElementById('formHasDiseases').value || 'لا',
+                diseases_details: document.getElementById('formDiseasesDetails').value.trim() || null,
+                hobbies: document.getElementById('formHobbies').value.trim() || null,
+                certificate: (() => {
+                    const certValue = document.getElementById('formCertificate').value.trim();
+                    if (certValue === 'other') {
+                        return document.getElementById('formCertificateOther').value.trim() || null;
+                    }
+                    return certValue || null;
+                })(),
+                photo_url: document.getElementById('formPhotoUrl').value.trim() || null,
+                // حالة الكشاف الأولية:
+                // - Master/General/SectorLeader: "مقبول" ✅ (موافقة تلقائية)
+                // - TroopLeader/Viewer: "قيد الانتظار" ⏳ (ينتظر موافقة)
+                status: isAdmin ? 'مقبول' : 'قيد الانتظار'
+            };
+
+            if (!validateScoutData(scoutData)) {
+                console.log("Validation failed");
+                return;
+            }
+
+            const btn = document.getElementById('formSubmitBtn');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            try {
+                let isSaved = false;
+                let retryCount = 0;
+                let currentScoutId = scoutData.scout_id;
+
+                while (!isSaved && retryCount < 10) {
+                    scoutData.scout_id = currentScoutId;
+                    const { error } = await supabaseClient.from('scouts').insert([scoutData]);
+                    
+                    if (error) {
+                        if (error.code === '23505' && error.message.includes('scout_id')) {
+                            retryCount++;
+                            const prefix = currentScoutId.charAt(0);
+                            const numPart = parseInt(currentScoutId.substring(1));
+                            currentScoutId = prefix + String(numPart + 1).padStart(5, '0');
+                            console.log("الكود محجوز، جاري تجربة الكود: ", currentScoutId);
+                        } else {
+                            throw error;
+                        }
+                    } else {
+                        isSaved = true;
+                    }
+                }
+
+                if (!isSaved) throw new Error("تعذر حفظ الكشاف بسبب الضغط على السيستم، جرب كمان شوية.");
+
+                alert(isAdmin ? `عاش يا قائد! الكشاف اتضاف بنجاح بكود: ${currentScoutId}` : 'تم إرسال الطلب لقائد القطاع للمراجعة، والماستر/القائد العام يقدروا يراجعوه أيضًا.');
+                document.getElementById('addScoutForm').reset(); 
+                await fetchNextScoutId();
+
+            } catch (err) {
+                console.error("Database Error:", err);
+                alert('في مشكلة في الحفظ: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
+        fetchNextScoutId();
+
+        // دالة تحديث السنة الدراسية والشهادة بناءً على المرحلة
+        function updateSchoolYearAndCertificate() {
+            const stage = document.getElementById('formSchoolStage').value;
+            const yearSelect = document.getElementById('formSchoolYear');
+            const certSelect = document.getElementById('formCertificate');
+            const certOtherContainer = document.getElementById('certificateOtherContainer');
+            const gawalaContainer = document.getElementById('gawalaFieldsContainer');
+            
+            // مسح الاختيارات القديمة وإخفاء الحقول الإضافية
+            yearSelect.innerHTML = '<option value="">-- اختار --</option>';
+            certSelect.innerHTML = '<option value="">-- اختار --</option>';
+            certOtherContainer.style.display = 'none';
+            gawalaContainer.style.display = 'none';
+            
+            if (stage === 'براعم') {
+                // براعم: سنة واحدة فقط
+                yearSelect.innerHTML = '<option value="براعم">براعم</option>';
+                yearSelect.value = 'براعم';
+                certSelect.innerHTML = '<option value="عام">عام</option>';
+                certSelect.value = 'عام';
+                
+            } else if (stage === 'ابتدائي') {
+                // أشبال وزهرات: من أولى لسادسة
+                yearSelect.innerHTML = `
+                    <option value="">-- اختار --</option>
+                    <option value="أولى">أولى</option>
+                    <option value="تانية">تانية</option>
+                    <option value="تالتة">تالتة</option>
+                    <option value="رابعة">رابعة</option>
+                    <option value="خامسة">خامسة</option>
+                    <option value="سادسة">سادسة</option>
+                `;
+                certSelect.innerHTML = '<option value="عام">عام</option>';
+                certSelect.value = 'عام';
+                
+            } else if (stage === 'اعدادي') {
+                // مبتدئ ومرشدات: أولى وتانية وتالتة
+                yearSelect.innerHTML = `
+                    <option value="">-- اختار --</option>
+                    <option value="أولى">أولى</option>
+                    <option value="تانية">تانية</option>
+                    <option value="تالتة">تالتة</option>
+                `;
+                certSelect.innerHTML = '<option value="عام">عام</option>';
+                certSelect.value = 'عام';
+                
+            } else if (stage === 'ثانوي') {
+                // متقدم ورائدات: أولى وتانية وتالتة + اختيارات متعددة للشهادة
+                yearSelect.innerHTML = `
+                    <option value="">-- اختار --</option>
+                    <option value="أولى">أولى</option>
+                    <option value="تانية">تانية</option>
+                    <option value="تالتة">تالتة</option>
+                `;
+                certSelect.innerHTML = `
+                    <option value="">-- اختار --</option>
+                    <option value="عام">عام</option>
+                    <option value="IG">IG</option>
+                    <option value="IB">IB</option>
+                    <option value="American">American</option>
+                    <option value="باكالوريا">باكالوريا</option>
+                    <option value="صنايع">صنايع</option>
+                    <option value="تجاري">تجاري</option>
+                    <option value="other">أخرى (اكتب بنفسك)</option>
+                `;
+            } else if (stage === 'مرشح جوالة') {
+                // مرشح جوالة: جامعة (اختياري)
+                yearSelect.innerHTML = '<option value="">-- اختياري --</option>';
+                certSelect.innerHTML = '<option value="عام">عام</option>';
+                certSelect.value = 'عام';
+                // إظهار حقول الجامعة
+                document.getElementById('gawalaFieldsContainer').style.display = 'grid';
+            }
+        }
+        
+        // دالة معالجة اختيار "أخرى" في الشهادة
+        function handleCertificateChange() {
+            const certSelect = document.getElementById('formCertificate');
+            const certOtherContainer = document.getElementById('certificateOtherContainer');
+            
+            if (certSelect.value === 'other') {
+                certOtherContainer.style.display = 'block';
+            } else {
+                certOtherContainer.style.display = 'none';
+                document.getElementById('formCertificateOther').value = '';
+            }
+        }
+
+    </script>
+</body>
+</html>

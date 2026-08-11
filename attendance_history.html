@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل الافتقاد - Ava Kirolos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --border: rgba(201,168,76,0.25); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: var(--silver); min-height: 100vh; }
+        nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); box-shadow: 0 2px 20px rgba(201,168,76,0.1); }
+        .table-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.5); }
+        thead tr { background: var(--dark3); border-bottom: 1px solid var(--border); color: var(--gold); }
+        tbody tr { border-bottom: 1px solid rgba(201,168,76,0.08); transition: background 0.15s; }
+        tbody tr:hover { background: rgba(201,168,76,0.05); }
+        .filter-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .form-input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid rgba(201,168,76,0.2); border-radius: 8px; background: var(--dark3); color: #fff; outline: none; }
+        .form-input:focus { border-color: var(--gold); }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #a8832a 100%); color: #0d0d0d; font-weight: 700; transition: all 0.2s; }
+        .btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--silver); transition: all 0.2s; }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .status-present { color: #10b981; font-weight: bold; }
+        .status-absent { color: #ef4444; font-weight: bold; }
+        .status-excused { color: #f59e0b; font-weight: bold; }
+        .date-badge { display: inline-block; background: rgba(201,168,76,0.15); color: var(--gold); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(201,168,76,0.3); }
+    </style>
+</head>
+<body>
+    <nav class="p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+            <button onclick="window.location.href='home.html'" class="text-xl text-gray-500 hover:text-[var(--gold)] transition ml-2" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+            <div>
+                <h1 class="text-lg font-bold text-white">سجل الافتقاد</h1>
+                <p class="text-xs text-gray-500" id="sectorLabel">جاري التحميل...</p>
+            </div>
+        </div>
+        <div class="text-right">
+            <p class="text-xs text-gray-500">إجمالي السجلات</p>
+            <p class="text-lg font-bold text-[var(--gold)]" id="totalRecords">0</p>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- الفلاتر -->
+        <div class="filter-card">
+            <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-filter text-[var(--gold)]"></i>
+                تصفية البيانات
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="form-label">التاريخ من</label>
+                    <input type="date" id="filterDateFrom" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">التاريخ إلى</label>
+                    <input type="date" id="filterDateTo" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">المرحلة</label>
+                    <select id="filterStage" class="form-input">
+                        <option value="">الكل</option>
+                        <option value="براعم">براعم</option>
+                        <option value="ابتدائي">ابتدائي</option>
+                        <option value="اعدادي">اعدادي</option>
+                        <option value="ثانوي">ثانوي</option>
+                        <option value="مرشح جوالة">مرشح جوالة</option>
+                        <option value="عشيرة جوالة">عشيرة الجوالة</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">الحالة</label>
+                    <select id="filterStatus" class="form-input">
+                        <option value="">الكل</option>
+                        <option value="حاضر">حاضر</option>
+                        <option value="غائب">غائب</option>
+                        <option value="إذن">إذن</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button onclick="applyFilters()" class="btn-gold px-6 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-search"></i> بحث
+                </button>
+                <button onclick="resetFilters()" class="btn-outline px-6 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> إعادة تعيين
+                </button>
+            </div>
+        </div>
+
+        <!-- الجدول -->
+        <div class="table-card">
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse whitespace-nowrap">
+                    <thead>
+                        <tr>
+                            <th class="p-4">التاريخ</th>
+                            <th class="p-4">الكود الكشفي</th>
+                            <th class="p-4">الاسم</th>
+                            <th class="p-4">المرحلة</th>
+                            <th class="p-4">الحالة</th>
+                            <th class="p-4 text-center">حضور (5)</th>
+                            <th class="p-4 text-center">التزام (3)</th>
+                            <th class="p-4 text-center">زي (3)</th>
+                            <th class="p-4 text-center">كناشة (3)</th>
+                            <th class="p-4 text-center">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                        <tr><td colspan="10" class="p-8 text-center text-gray-400">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- إحصائيات سريعة -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <div class="filter-card text-center">
+                <i class="fa-solid fa-check-circle text-green-400 text-3xl mb-2"></i>
+                <p class="text-xs text-gray-500">إجمالي الحضور</p>
+                <p class="text-2xl font-bold text-green-400" id="statPresent">0</p>
+            </div>
+            <div class="filter-card text-center">
+                <i class="fa-solid fa-times-circle text-red-400 text-3xl mb-2"></i>
+                <p class="text-xs text-gray-500">إجمالي الغياب</p>
+                <p class="text-2xl font-bold text-red-400" id="statAbsent">0</p>
+            </div>
+            <div class="filter-card text-center">
+                <i class="fa-solid fa-exclamation-circle text-yellow-400 text-3xl mb-2"></i>
+                <p class="text-xs text-gray-500">إجمالي الأذونات</p>
+                <p class="text-2xl font-bold text-yellow-400" id="statExcused">0</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xbdprjxvtwfieiqncbez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHByanh2dHdmaWVpcW5jYmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NDgsImV4cCI6MjA5NTI5ODY0OH0.ptteVMU6OYawOqiQinKg2FQ_fpP-_VdG3BJY6alkgXM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('scout_leader_session') || 'null');
+        if (!currentUser) window.location.href = 'index.html';
+
+        let allAttendance = [];
+        let allScouts = [];
+
+        // تحديد المرحلة حسب الصلاحية
+        function getUserStage() {
+            if (currentUser.role === 'Master' || currentUser.role === 'General') {
+                return null; // يشوف الكل
+            } else if (currentUser.role === 'SectorLeader') {
+                const sectorMap = {
+                    'براعم': 'براعم',
+                    'ابتدائي': 'ابتدائي',
+                    'اعدادي': 'اعدادي',
+                    'ثانوي': 'ثانوي',
+                    'مرشح جوالة': 'مرشح جوالة',
+                    'عشيرة جوالة': 'عشيرة جوالة',
+                    'عشيرة الجوالة': 'عشيرة جوالة'  // إضافة النسخة مع الـ
+                };
+                return sectorMap[currentUser.sector] || null;
+            } else if (currentUser.role === 'TroopLeader') {
+                const troopMap = {
+                    'براعم': 'براعم',
+                    'أشبال وزهرات': 'ابتدائي',
+                    'أشبال': 'ابتدائي',
+                    'زهرات': 'ابتدائي',
+                    'مبتدئ ومرشدات': 'اعدادي',
+                    'كشاف مبتدئ': 'اعدادي',
+                    'مرشدات': 'اعدادي',
+                    'متقدم ورائدات': 'ثانوي',
+                    'كشاف متقدم': 'ثانوي',
+                    'رائدات': 'ثانوي',
+                    'مرشح جوالة': 'مرشح جوالة',
+                    'عشيرة الجوالة': 'عشيرة جوالة'
+                };
+                return troopMap[currentUser.troop] || null;
+            }
+            return null;
+        }
+
+        async function loadData() {
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري التحميل...</td></tr>';
+
+            // جيب كل الكشافين
+            let scoutsQuery = supabaseClient.from('scouts').select('scout_id, full_name, school_stage, leader_sync_id');
+            const userStage = getUserStage();
+            if (userStage) {
+                scoutsQuery = scoutsQuery.eq('school_stage', userStage);
+                
+                // خاص: قائد عشيرة الجوالة يشوف القادة المتزامنين فقط
+                if (userStage === 'عشيرة جوالة') {
+                    scoutsQuery = scoutsQuery.not('leader_sync_id', 'is', null);
+                    console.log('🏕️ عشيرة الجوالة: فلترة القادة المتزامنين فقط في attendance_history');
+                }
+            }
+            const { data: scouts, error: scoutsError } = await scoutsQuery;
+
+            if (scoutsError || !scouts) {
+                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-red-400">فشل تحميل بيانات الكشافين</td></tr>';
+                return;
+            }
+
+            allScouts = scouts;
+
+            // جيب كل سجلات الحضور
+            const scoutIds = scouts.map(s => s.scout_id);
+            if (scoutIds.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-gray-500">مفيش كشافين في قطاعك</td></tr>';
+                return;
+            }
+
+            const { data: attendance, error: attError } = await supabaseClient
+                .from('attendance')
+                .select('*')
+                .in('scout_id', scoutIds)
+                .order('date', { ascending: false });
+
+            if (attError || !attendance) {
+                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-red-400">فشل تحميل سجل الحضور</td></tr>';
+                return;
+            }
+
+            allAttendance = attendance;
+
+            // تحديث Label
+            if (currentUser.role === 'Master' || currentUser.role === 'General') {
+                document.getElementById('sectorLabel').textContent = 'كل المجموعة';
+            } else if (currentUser.role === 'SectorLeader') {
+                document.getElementById('sectorLabel').textContent = `قطاع ${currentUser.sector}`;
+            } else {
+                document.getElementById('sectorLabel').textContent = `فرقة ${currentUser.troop}`;
+            }
+
+            renderTable(allAttendance);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('attendanceTableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-gray-500">مفيش سجلات حضور</td></tr>';
+                document.getElementById('totalRecords').textContent = '0';
+                updateStats([]);
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(record => {
+                const scout = allScouts.find(s => s.scout_id === record.scout_id);
+                if (!scout) return;
+
+                const total = (record.attendance_score || 0) + (record.commitment_score || 0) + 
+                             (record.uniform_score || 0) + (record.activity_score || 0);
+                
+                const statusClass = record.status === 'حاضر' ? 'status-present' : 
+                                   record.status === 'إذن' ? 'status-excused' : 'status-absent';
+
+                const stageNames = {
+                    'براعم': 'براعم',
+                    'ابتدائي': 'أشبال وزهرات',
+                    'اعدادي': 'مبتدئ ومرشدات',
+                    'ثانوي': 'متقدم ورائدات',
+                    'مرشح جوالة': 'مرشح جوالة',
+                    'عشيرة جوالة': 'عشيرة الجوالة'
+                };
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-4"><span class="date-badge">${record.date}</span></td>
+                    <td class="p-4 font-mono text-[var(--gold)]">${scout.scout_id}</td>
+                    <td class="p-4 text-white font-medium">${scout.full_name}</td>
+                    <td class="p-4 text-gray-400">${stageNames[scout.school_stage] || scout.school_stage}</td>
+                    <td class="p-4 ${statusClass}">${record.status}</td>
+                    <td class="p-4 text-center text-gray-300">${record.attendance_score || 0}</td>
+                    <td class="p-4 text-center text-gray-300">${record.commitment_score || 0}</td>
+                    <td class="p-4 text-center text-gray-300">${record.uniform_score || 0}</td>
+                    <td class="p-4 text-center text-gray-300">${record.activity_score || 0}</td>
+                    <td class="p-4 text-center font-bold text-[var(--gold)]">${total}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalRecords').textContent = data.length;
+            updateStats(data);
+        }
+
+        function updateStats(data) {
+            const present = data.filter(r => r.status === 'حاضر').length;
+            const absent = data.filter(r => r.status === 'غائب').length;
+            const excused = data.filter(r => r.status === 'إذن').length;
+
+            document.getElementById('statPresent').textContent = present;
+            document.getElementById('statAbsent').textContent = absent;
+            document.getElementById('statExcused').textContent = excused;
+        }
+
+        function applyFilters() {
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const stage = document.getElementById('filterStage').value;
+            const status = document.getElementById('filterStatus').value;
+
+            let filtered = [...allAttendance];
+
+            // فلتر التاريخ
+            if (dateFrom) {
+                filtered = filtered.filter(r => r.date >= dateFrom);
+            }
+            if (dateTo) {
+                filtered = filtered.filter(r => r.date <= dateTo);
+            }
+
+            // فلتر المرحلة
+            if (stage) {
+                const scoutIdsInStage = allScouts.filter(s => s.school_stage === stage).map(s => s.scout_id);
+                filtered = filtered.filter(r => scoutIdsInStage.includes(r.scout_id));
+            }
+
+            // فلتر الحالة
+            if (status) {
+                filtered = filtered.filter(r => r.status === status);
+            }
+
+            renderTable(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('filterStage').value = '';
+            document.getElementById('filterStatus').value = '';
+            renderTable(allAttendance);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

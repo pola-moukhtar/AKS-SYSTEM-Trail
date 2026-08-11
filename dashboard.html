@@ -1,0 +1,357 @@
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <link rel="icon" type="image/png" href="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ava Kirolos Scout Group</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap">
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <style>
+            :root { --gold: #c9a84c; --gold-lt: #e8d5a3; --silver: #c0c0c0; --dark: #0d0d0d; --dark2: #1a1a1a; --dark3: #242424; --dark4: #2e2e2e; --red: #8b1a1a; --border: rgba(201,168,76,0.25); }
+            * { box-sizing: border-box; }
+            body { font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: var(--silver); }
+            ::-webkit-scrollbar { width: 6px; height: 6px; }
+            ::-webkit-scrollbar-track { background: var(--dark2); }
+            ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+            nav { background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%); border-bottom: 1px solid var(--border); box-shadow: 0 2px 20px rgba(201,168,76,0.1); }
+            .tab-btn { color: #888; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+            .tab-btn:hover { color: var(--gold-lt); }
+            .tab-btn.active { border-bottom: 3px solid var(--gold); color: var(--gold); font-weight: bold; }
+            .count-badge { display: inline-block; background: rgba(201,168,76,0.15); color: var(--gold); font-size: 0.7rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-right: 6px; border: 1px solid rgba(201,168,76,0.3); white-space: nowrap; }
+            .tab-btn.active .count-badge { background: rgba(201,168,76,0.25); border-color: rgba(201,168,76,0.5); }
+            .table-card { background: var(--dark2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.5); }
+            .tabs-bar { background: var(--dark3); border-bottom: 1px solid var(--border); }
+            thead tr { background: var(--dark3); border-bottom: 1px solid var(--border); color: var(--gold); font-size: 0.8rem; letter-spacing: 0.05em; }
+            tbody tr { border-bottom: 1px solid rgba(201,168,76,0.08); transition: background 0.15s; }
+            tbody tr:hover { background: rgba(201,168,76,0.05); }
+            .text-blue-900 { color: var(--gold) !important; } 
+            .text-gray-900 { color: #ffffff !important; } 
+            .text-gray-800 { color: #ffffff !important; } 
+            .text-gray-600 { color: var(--silver) !important; } 
+            .text-blue-600 { color: var(--gold-lt) !important; } 
+            .text-green-600 { color: #4ade80 !important; }
+            .text-red-500 { color: #ef4444 !important; }
+            .bg-blue-50 { background-color: var(--dark3) !important; border-color: var(--border) !important; color: var(--gold) !important;} 
+            .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #a8832a 100%); color: #0d0d0d; font-weight: 700; border: none; transition: all 0.2s; }
+            .btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+            .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--silver); transition: all 0.2s; }
+            .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+            .btn-danger { background: var(--red); color: #fff; transition: all 0.2s; }
+            .btn-danger:hover { filter: brightness(1.2); }
+            .search-input { background: var(--dark3); border: 1px solid var(--border); color: var(--silver); border-radius: 8px; padding: 0.6rem 2.5rem 0.6rem 0.75rem; width: 100%; outline: none; transition: border-color 0.2s; }
+            .search-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.15); }
+            .mode-toggle { background: var(--dark3); border: 1px solid var(--border); border-radius: 8px; display: inline-flex; overflow: hidden; margin-bottom: 15px;}
+            .mode-btn { padding: 8px 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: 0.2s; border: none; outline: none; }
+            .mode-btn.active { background: var(--gold); color: #000; }
+            .mode-btn:not(.active) { color: #888; background: transparent; }
+            .modal-bg { background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
+            .modal-box { background: var(--dark2); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 60px rgba(0,0,0,0.8); }
+            .modal-header { border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--dark3), var(--dark2)); }
+            .modal-footer { border-top: 1px solid var(--border); background: var(--dark3); }
+            .form-input { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid rgba(201,168,76,0.2); border-radius: 8px; font-size: 0.875rem; outline: none; background: var(--dark3); color: var(--silver); transition: border-color 0.15s; color-scheme: dark; }
+            .form-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.15); }
+            .form-label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+            .section-heading { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; border-radius: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+            .section-heading.gold  { background: rgba(201,168,76,0.1);  color: var(--gold);   border-right: 3px solid var(--gold); }
+            .section-heading.red   { background: rgba(139,26,26,0.15);  color: #e57373;        border-right: 3px solid #e57373; }
+            .gold-divider { height: 1px; background: linear-gradient(to left, transparent, var(--gold), transparent); margin: 16px 0; }
+            .stage-badge { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.4); padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+            @media print { body * { visibility: hidden; } #printProfileArea, #printProfileArea * { visibility: visible; } #printProfileArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; background: white !important; color: black !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
+            .pdf-export-mode {
+        width: 1000px !important;
+        max-width: 1000px !important;
+        overflow: visible !important;
+    }
+
+    .pdf-export-mode table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .pdf-export-mode th,
+    .pdf-export-mode td {
+        padding: 8px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+    }
+
+    .pdf-export-mode canvas {
+        max-height: 300px !important;
+    }
+
+    .pdf-export-mode * {
+        overflow: visible !important;
+    }
+        </style>
+    </head>
+    <body>
+        <nav class="p-4 sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.location.href='home.html'" class="text-xl text-[var(--gold)] hover:text-white transition" title="الرئيسية"><i class="fa-solid fa-house"></i></button>
+                    <img src="https://xbdprjxvtwfieiqncbez.supabase.co/storage/v1/object/public/Logo/Gemini_Generated_Image_.png" class="w-12 h-12 object-contain drop-shadow-lg rounded-full">
+                    <div><p class="text-xs font-bold tracking-widest" style="color: var(--gold)">AVA KIROLOS SCOUT GROUP</p><p class="text-xs" style="color: #666;">لوحة تحكم الكشافة</p></div>
+                </div>
+                <div class="relative w-full md:w-96">
+    <input type="text" id="searchInput" placeholder="ابحث بالاسم، الكود..." class="search-input">
+    <i class="fa-solid fa-search absolute right-3 top-3" style="color: var(--gold); font-size: 0.85rem;"></i>
+</div>
+<select id="genderFilter" class="form-input w-full md:w-40">
+    <option value="الكل">كل الأنواع</option>
+    <option value="ولد">👦 ولد</option>
+    <option value="بنت">👧 بنت</option>
+</select>
+                <div class="flex gap-2 w-full md:w-auto justify-end">
+                    <button onclick="exportCurrentTableToExcel()" class="btn-outline px-4 py-2 rounded-lg flex items-center gap-2 text-sm"><i class="fa-solid fa-file-excel text-green-400"></i> إكسيل</button>
+                    <button id="addScoutBtn" onclick="window.location.href='form.html'" class="btn-gold px-4 py-2 rounded-lg flex items-center gap-2 text-sm"><i class="fa-solid fa-user-plus"></i> إضافة كشاف</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto mt-4 px-4 md:px-0 mb-10">
+            <div class="flex justify-center md:justify-start">
+                <div class="mode-toggle">
+                    <button id="btnViewData" class="mode-btn active" onclick="switchView('data')"><i class="fa-solid fa-database ml-1"></i> قاعدة البيانات</button>
+                    <button id="btnViewRank" class="mode-btn" onclick="switchView('rank')"><i class="fa-solid fa-trophy ml-1"></i> التقييمات والترتيب</button>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="tabs-bar flex overflow-x-auto" id="tabsContainer">
+                    <button class="tab-btn active p-4 min-w-max" data-stage="الكل" onclick="filterData('الكل', this)">
+                        كل المجموعة <span class="count-badge" id="count-الكل">0</span>
+                    </button>
+                    <button class="tab-btn p-4 min-w-max" data-stage="براعم" onclick="filterData('براعم', this)">
+                        براعم <span class="count-badge" id="count-براعم">0</span>
+                    </button>
+                    <button class="tab-btn p-4 min-w-max" data-stage="أشبال وزهرات" onclick="filterData('أشبال وزهرات', this)">
+                        أشبال وزهرات <span class="count-badge" id="count-أشبال وزهرات">0</span>
+                    </button>
+                    <button class="tab-btn p-4 min-w-max" data-stage="مبتدئ ومرشدات" onclick="filterData('مبتدئ ومرشدات', this)">
+                        مبتدئ ومرشدات <span class="count-badge" id="count-مبتدئ ومرشدات">0</span>
+                    </button>
+                    <button class="tab-btn p-4 min-w-max" data-stage="متقدم ورائدات" onclick="filterData('متقدم ورائدات', this)">
+                        متقدم ورائدات <span class="count-badge" id="count-متقدم ورائدات">0</span>
+                    </button>
+                    <button class="tab-btn p-4 min-w-max" data-stage="مرشح جوالة" onclick="filterData('مرشح جوالة', this)">
+                        مرشح جوالة <span class="count-badge" id="count-مرشح جوالة">0</span>
+                    </button>
+                    <button class="tab-btn p-4 min-w-max" data-stage="عشيرة الجوالة" onclick="filterData('عشيرة الجوالة', this)">
+                        عشيرة الجوالة <span class="count-badge" id="count-عشيرة الجوالة">0</span>
+                    </button>
+                </div>
+
+                <div id="dataView" class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse whitespace-nowrap" id="dataTable">
+                        <thead><tr><th class="p-4">الصورة</th><th class="p-4">الكود الكشفي</th><th class="p-4">الاسم الرباعي</th><th class="p-4">الفرقة الكشفية</th><th class="p-4">الطليعة</th><th class="p-4">رقم الموبايل</th><th class="p-4">ملاحظات</th><th class="p-4 text-center">إجراءات</th></tr></thead>
+                        <tbody id="scoutsTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="rankView" class="overflow-x-auto hidden">
+                    <table class="w-full text-right border-collapse whitespace-nowrap" id="rankTable">
+                        <thead><tr><th class="p-4 w-16 text-center">الترتيب</th><th class="p-4">الاسم</th><th class="p-4">الفرقة</th><th class="p-4 text-center">نسبة الحضور</th><th class="p-4 text-center text-[var(--gold)] font-bold">إجمالي الدرجات</th></tr></thead>
+                        <tbody id="rankTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileModal" class="modal-bg fixed inset-0 hidden flex items-center justify-center z-50 p-4">
+            <div class="modal-box w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+                <button onclick="closeModal('profileModal')" class="absolute top-4 left-4 text-2xl transition z-10 text-gray-400 hover:text-red-400"><i class="fa-solid fa-circle-xmark"></i></button>
+
+                <div id="printProfileArea" class="p-6">
+                    <div class="flex flex-col md:flex-row items-center gap-6 pb-5 modal-header p-6 rounded-t-xl" style="margin: -24px -24px 0;">
+                        <img id="modalImage" src="" alt="Profile" crossorigin="anonymous" class="w-28 h-28 rounded-full object-cover cursor-pointer hover:opacity-85 transition border-2 border-[var(--gold)]">
+                        <div class="text-center md:text-right">
+                            <h2 id="modalName" class="text-2xl font-bold mb-1 text-white"></h2>
+                            <p id="modalID" class="text-sm font-semibold mb-2 text-[var(--gold)]"></p>
+                            <span id="modalStageBadge" class="stage-badge"></span>
+                        </div>
+                    </div>
+
+                    <div class="gold-divider mt-6"></div>
+                    <div class="section-heading gold"><i class="fa-solid fa-circle-info"></i> البيانات الشخصية</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2 text-sm" id="modalDetails"></div>
+
+                    <div class="gold-divider mt-6"></div>
+                    <div class="section-heading gold"><i class="fa-solid fa-chart-line"></i> سجل الأداء والتقييمات</div>
+                    
+                    <div class="mt-4 bg-[var(--dark3)] p-4 rounded-xl border border-[var(--border)]">
+                        <canvas id="scoutPerformanceChart" height="80"></canvas>
+                    </div>
+
+                    <div class="mt-4 max-h-60 overflow-y-auto border border-[var(--border)] rounded-lg">
+                        <table class="w-full text-right text-sm">
+                            <thead class="bg-[var(--dark3)] text-[var(--gold)] sticky top-0">
+                                <tr>
+                                    <th class="p-3">التاريخ</th>
+                                    <th class="p-3">الحالة</th>
+                                    <th class="p-3 text-center">حضور (5)</th>
+                                    <th class="p-3 text-center">التزام (3)</th>
+                                    <th class="p-3 text-center">زي (3)</th>
+                                    <th class="p-3 text-center">كناشة (3)</th>
+                                    <th class="p-3 text-center text-white">إجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalAttendanceDetails" class="text-gray-300">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer p-4 rounded-b-xl flex gap-2 justify-end">
+                    <button onclick="exportProfileToPDF()" class="btn-danger px-5 py-2 rounded-lg flex items-center gap-2 text-sm font-semibold"><i class="fa-solid fa-file-pdf"></i> تحميل PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="formModal" class="modal-bg fixed inset-0 hidden flex items-center justify-center z-50 p-4">
+            <div class="modal-box w-full max-w-5xl max-h-[92vh] overflow-y-auto relative">
+                <button onclick="closeModal('formModal')" class="absolute top-4 left-4 text-2xl transition z-10 text-gray-500 hover:text-red-400"><i class="fa-solid fa-circle-xmark"></i></button>
+                <div class="modal-header p-6 rounded-t-xl sticky top-0 z-[1]">
+                    <h2 id="formModalTitle" class="text-lg font-bold text-white"></h2>
+                    <p class="text-xs text-[var(--gold)] mt-1">الكود: <span id="formScoutIdDisplay">—</span></p>
+                </div>
+                <div class="p-6 pt-2">
+                    <form id="scoutForm" onsubmit="return false;">
+                        <input type="hidden" id="formScoutId">
+
+                        <div class="section-heading gold"><i class="fa-solid fa-circle-info"></i> البيانات الأساسية</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+                            <div><label class="form-label">الاسم الرباعي *</label><input id="formFullName" type="text" class="form-input" placeholder="الاسم الرباعي كامل"></div>
+                            <div><label class="form-label">تاريخ الميلاد</label><input id="formBirthDate" type="date" class="form-input"></div>
+                            <div>
+                                <label class="form-label">النوع</label>
+                                <select id="formGender" class="form-input">
+                                    <option value="">-- اختار --</option>
+                                    <option value="ولد">ولد</option>
+                                    <option value="بنت">بنت</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">المرحلة الدراسية</label>
+                                <select id="formSchoolStage" class="form-input">
+                                    <option value="">-- اختار --</option>
+                                    <option value="براعم">براعم</option>
+                                    <option value="ابتدائي">أشبال وزهرات</option>
+                                    <option value="اعدادي">مبتدئ ومرشدات</option>
+                                    <option value="ثانوي">متقدم ورائدات</option>
+                                    <option value="مرشح جوالة">مرشح جوالة</option>
+                                    <option value="عشيرة جوالة">عشيرة الجوالة</option>
+                                </select>
+                            </div>
+                            <div><label class="form-label">السنة الدراسية</label><input id="formSchoolYear" type="text" class="form-input" placeholder="مثال: تانية"></div>
+                            <div><label class="form-label">المؤهل / الشهادة</label><input id="formCertificate" type="text" class="form-input" placeholder="مثال: عام"></div>
+                        </div>
+
+                        <div class="gold-divider"></div>
+                        <div class="section-heading gold"><i class="fa-solid fa-phone"></i> بيانات التواصل</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+                            <div><label class="form-label">موبايل الكشاف *</label><input id="formPersonalPhone" type="text" class="form-input" dir="ltr" placeholder="01xxxxxxxxx"></div>
+                            <div><label class="form-label">تليفون الأب</label><input id="formFatherPhone" type="text" class="form-input" dir="ltr" placeholder="01xxxxxxxxx"></div>
+                            <div><label class="form-label">تليفون الأم</label><input id="formMotherPhone" type="text" class="form-input" dir="ltr" placeholder="01xxxxxxxxx"></div>
+                            <div><label class="form-label">الإيميل الشخصي</label><input id="formPersonalEmail" type="email" class="form-input" dir="ltr" placeholder="example@gmail.com"></div>
+                            <div><label class="form-label">يوزر الفيسبوك</label><input id="formFacebook" type="text" class="form-input" placeholder="اسم الأكونت"></div>
+                            <div><label class="form-label">يوزر الإنستجرام</label><input id="formInstagram" type="text" class="form-input" placeholder="اسم الأكونت"></div>
+                            <div class="sm:col-span-2 md:col-span-3"><label class="form-label">العنوان بالكامل</label><input id="formAddress" type="text" class="form-input" placeholder="رقم الشارع، الشارع، المنطقة"></div>
+                        </div>
+
+                        <div class="gold-divider"></div>
+                        <div class="section-heading gold"><i class="fa-solid fa-house-user"></i> بيانات الأسرة</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+                            <div><label class="form-label">شغل الأب</label><input id="formFatherJob" type="text" class="form-input" placeholder="وظيفة الأب"></div>
+                            <div><label class="form-label">شغل الأم</label><input id="formMotherJob" type="text" class="form-input" placeholder="وظيفة الأم"></div>
+                            <div><label class="form-label">عدد الإخوة</label><input id="formSiblingsCount" type="number" class="form-input" placeholder="مثال: 3"></div>
+                            <div><label class="form-label">ترتيبه بين إخواته</label><input id="formSiblingOrder" type="number" class="form-input" placeholder="مثال: 2"></div>
+                            <div><label class="form-label">أب الاعتراف</label><input id="formConfessionFather" type="text" class="form-input" placeholder="اسم أب الاعتراف"></div>
+                            <div><label class="form-label">كنيسة أب الاعتراف</label><input id="formConfessionChurch" type="text" class="form-input" placeholder="اسم الكنيسة"></div>
+                        </div>
+
+                        <div class="gold-divider"></div>
+                        <div class="section-heading gold"><i class="fa-solid fa-campground"></i> بيانات كشفية</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+                            <div><label class="form-label">الزي الكشفي المتوفر</label><input id="formUniform" type="text" class="form-input" placeholder="مثال: قميص، فولار"></div>
+                            <div class="sm:col-span-2"><label class="form-label">الهوايات والمهارات</label><input id="formHobbies" type="text" class="form-input" placeholder="مثال: رسم، كورة"></div>
+                        </div>
+
+                        <div class="gold-divider"></div>
+                        <div class="section-heading red"><i class="fa-solid fa-heart-pulse"></i> الصحة</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <label class="form-label" style="color: #e57373;">عنده أمراض؟</label>
+                                <select id="formHasDiseases" class="form-input">
+                                    <option value="لا">لا</option>
+                                    <option value="نعم">نعم</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" style="color: #e57373;">تفاصيل الحالة الصحية</label>
+                                <input id="formDiseasesDetails" type="text" class="form-input" placeholder="لو في تفاصيل اكتبها هنا">
+                            </div>
+                        </div>
+
+                        <div class="gold-divider"></div>
+                        <div class="section-heading gold"><i class="fa-solid fa-image"></i> الصورة</div>
+                        <div class="mb-2">
+                            <label class="form-label">رابط الصورة من Google Drive</label>
+                            <input id="formPhotoUrl" type="text" class="form-input" dir="ltr" placeholder="https://drive.google.com/open?id=...">
+                        </div>
+
+                        <div class="gold-divider"></div>
+                        <div class="section-heading gold"><i class="fa-solid fa-comment"></i> ملاحظات القادة</div>
+                        <div class="mb-2">
+                            <label class="form-label">ملاحظات عن الكشاف</label>
+                            <textarea id="formComments" class="form-input" rows="3" style="resize:vertical" placeholder="ملاحظات القادة عن الكشاف..."></textarea>
+                            <p class="text-xs text-gray-500 mt-1">هذه الملاحظات يمكن لجميع القادة رؤيتها وتعديلها</p>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer p-4 rounded-b-xl flex gap-2 justify-end sticky bottom-0">
+                    <button type="button" onclick="closeModal('formModal')" class="btn-outline px-5 py-2 rounded-lg text-sm font-semibold">إلغاء</button>
+                    <button type="button" id="formSubmitBtn" class="btn-gold px-6 py-2 rounded-lg text-sm font-semibold">حفظ</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-95 hidden flex items-center justify-center z-[60]" onclick="closeModal('imageModal')">
+            <img id="fullSizeImage" src="" class="max-w-full max-h-[85vh] rounded-lg object-contain border-2 border-[var(--gold)]">
+        </div>
+
+        <script src="app.js"></script>
+        <script>
+            function switchView(view) {
+                if(view === 'data') {
+                    document.getElementById('btnViewData').classList.add('active');
+                    document.getElementById('btnViewRank').classList.remove('active');
+                    document.getElementById('dataView').classList.remove('hidden');
+                    document.getElementById('rankView').classList.add('hidden');
+                } else {
+                    document.getElementById('btnViewRank').classList.add('active');
+                    document.getElementById('btnViewData').classList.remove('active');
+                    document.getElementById('rankView').classList.remove('hidden');
+                    document.getElementById('dataView').classList.add('hidden');
+                    if(typeof calculateRankings === 'function') calculateRankings();
+                }
+            }
+            function exportCurrentTableToExcel() {
+                const isRank = !document.getElementById('rankView').classList.contains('hidden');
+                const table = isRank ? document.getElementById('rankTable') : document.getElementById('dataTable');
+                const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet 1"});
+                XLSX.writeFile(wb, `Ava_Kirolos_${isRank ? 'Rankings' : 'Scouts'}.xlsx`);
+            }
+        </script>
+    </body>
+    </html>
